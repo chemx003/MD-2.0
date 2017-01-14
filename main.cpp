@@ -8,19 +8,22 @@ using namespace std;
 				double ex[], double ey[], double ez[]);	
 
 //  Initialize the simulation
-	void init	(double x[], double y[], double z[],
-			  	double xOld[], double yOld[], double zOld[],
-			  	double ex[], double ey[], double ez[],
-			  	double exOld, double eyOld[], ezOld[]);
+	void init	(double* x, double* y, double* z,
+			  	double* xOld, double* yOld, double* zOld,
+			  	double* ex, double* ey, double* ez,
+			  	double* exOld, double* eyOld, double* ezOld);
 
 //  Calculate pair correlation function
 	void pc		(double x[], double y[], double z[]);
+
+// 	Print global variables
+	void print_global_variables();
 
 //  Numerically integrate Newton's Equations
 	void verlet (double x[], double y[], double z[],
 			  	double xOld[], double yOld[], double zOld[],
 			  	double ex[], double ey[], double ez[],
-			  	double exOld, double eyOld[], ezOld[]);
+			  	double exOld, double eyOld[], double ezOld[]);
 
 //  These wil eventually get put into a header file
 /*----------------------------------------------------------------------------*/
@@ -45,8 +48,11 @@ double	K, V, E, 					//Pot, kin, tot energies
 
 /*----------------------------------------------------------------------------*/
 
+
+
+
 //  Main function
-void main(){
+int main(){
 	
 	//  Local variables
 	double 	x[N], y[N], z[N], 				//  Particle coords at n
@@ -56,16 +62,48 @@ void main(){
 			exOld[N], eyOld[N], ezOld[N],	//  Particle orient at n-1
 
 			fx[N], fy[N], fz[N],			//  Forces
-			gx[N], gy[N], gz[N],			//  Gorques
+			gx[N], gy[N], gz[N];			//  Gorques
 
 	//  Iteration
-	init();			//  Initialize
+	print_global_variables();
+	init(x, y, z, xOld, yOld, zOld,
+		 ex, ey, ez, exOld, eyOld, ezOld);			//  Initialize
 
-	for(){
+	/*for(){
 		gb(); 		//  Calculate the forces and torques
 		verlet(); 	//  Integrate the eqns of motion
 	}
 	
 	//  Analysis & Post-Processing
-	pc();			//  Calculate PCF
+	pc();			//  Calculate PCF*/
+}
+
+/*  Initialize particle positions, orientations, velocities, and angular 
+ *  velocities 																  */
+void init	(double* x, double* y, double* z,
+			 double* xOld, double* yOld, double* zOld,
+			 double* ex, double* ey, double* ez,
+			 double* exOld, double* eyOld, double* ezOld){
+
+	
+}
+
+void print_global_variables(){
+	cout << "GLOBAL VARIABLES" << endl << endl;
+	
+	cout << "N = " << N << endl << endl;
+
+	cout << "num_steps = " << num_steps << endl;
+	cout << "dt = " << dt << endl;
+	cout << "temp_init = " << temp_init << endl << endl;
+
+	cout << "L = " << L << endl << endl;
+
+	cout << "M = " << M << endl;
+	cout << "I = " << I << endl;
+
+	cout << "K = " << K << endl;
+	cout << "V = " << V << endl;
+	cout << "E = " << E << endl;
+	cout << "P = " << P << endl;
 }
