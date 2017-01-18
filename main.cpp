@@ -1,4 +1,5 @@
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <stdlib.h>
 #include <time.h>
@@ -45,6 +46,10 @@ using namespace std;
 			  	double* xOld, double* yOld, double* zOld,
 			  	double* ex, double* ey, double* ez,
 			  	double* exOld, double* eyOld, double* ezOld);
+
+//  Write the positions and orientations to a file
+	void write_vectors(double* x, double* y, double* z,
+					   double* ex, double* ey, double* ez);
 
 //  These wil eventually get put into a header file
 /*----------------------------------------------------------------------------*/
@@ -102,6 +107,8 @@ int main(){
 	print_energies();
 	print_temp();
 
+	write_vectors(x, y, z, ex, ey, ez);
+
 	if(check_unit_length(ex, ey, ez) == -1){
 		cout << "ORIENTATION VECTORS DO NOT HAVE UNIT LENGTH" << endl << endl;
 	}
@@ -137,11 +144,12 @@ void init	(double* x, double* y, double* z,
 			vx[N], vy[N], vz[N],			//  velocities
 			ux[N], uy[N], uz[N],
 
+			a,								//  Particle spacing
+
 			mag;							//  Magnitude of orientation
 
 	int		NUM_LINE,						//  Max amt of particles in a direc.
-			p,								//  Particles placed
-			a;								//  Particle spacing
+			p;								//  Particles placed
 
 	/*  Initial setting of postions, orientations, velocities and angular 
 	 *  velocities*/
@@ -153,7 +161,7 @@ void init	(double* x, double* y, double* z,
 	
 	//  Max number of particles along a side of a cube length l with spacing a
 	NUM_LINE = ceil(pow(N, 1.0 / 3.0));
-	a = L / N;
+	a = L / NUM_LINE;
 
 	for(int i = 0; i < NUM_LINE; i++) {
 		for(int j = 0; j < NUM_LINE; j++) {
@@ -326,4 +334,17 @@ void print_temp(){
 	cout << "T = " << T << endl;
 
 	cout << endl;
+}
+
+//  Write the positions and orientations to a file for display puposes
+void write_vectors(double* x, double* y, double* z,
+				   double* ex, double* ey, double* ez){
+	ofstream o;
+	o.open("vector.dat", ios::app);
+	for(int i = 0; i < N; i++){
+		o << x[i] << "\t" << y[i] << "\t" << z[i] << "\t"
+		  << ex[i] << "\t" << ey[i] << "\t" << ez[i] << endl;
+	}
+	//  Need extra lines for gnuplot to recognize blocks	
+	o << endl << endl << endl;
 }
