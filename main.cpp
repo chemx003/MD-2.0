@@ -3,22 +3,11 @@
 #include <iostream>
 #include <stdlib.h>
 #include <time.h>
+#include "auxillary_functions.h"
 
 using namespace std;
 
 /*-----------------------  Function Declarations  ----------------------------*/
-//  Calculate the total energy
-	void calc_E();
-
-//  Calculate the temperature of the system
-	void calc_temp();
-
-//  Checks if vectors are unit length
-	int check_unit_length(double* x, double* y, double* z);
-
-//  Generate a random double between dMin and dMax
-	double dRand(double dMin, double dMax);
-
 //  Gay-Berne: Calulate the forces and torques
 	void gb		(double* x, double* y, double* z,
 				double* ex, double* ey, double* ez);	
@@ -32,24 +21,13 @@ using namespace std;
 //  Calculate pair correlation function
 	void pc		(double* x, double* y, double* z);
 
-//  Print energies
-	void print_energies();
 
-// 	Print global variables
-	void print_global_variables();
-
-//  Print temperature
-	void print_temp();
 
 //  Numerically integrate Newton's Equations
 	void verlet (double* x, double* y, double* z,
 			  	double* xOld, double* yOld, double* zOld,
 			  	double* ex, double* ey, double* ez,
 			  	double* exOld, double* eyOld, double* ezOld);
-
-//  Write the positions and orientations to a file
-	void write_vectors(double* x, double* y, double* z,
-					   double* ex, double* ey, double* ez);
 
 //  These wil eventually get put into a header file
 /*----------------------------------------------------------------------------*/
@@ -260,91 +238,4 @@ void init	(double* x, double* y, double* z,
 	}
 }
 
-//  Calculate the total energy
-void calc_E(){
-	E = K + V;
-}
 
-//  Calculate the temperature of the system
-void calc_temp(){
-	T = (2 * K) / (5 * N * KB);
-}
-
-/*  Check if vectors are unit length
- *  --->	returns -1 if not		*/
-int check_unit_length(double* x, double* y, double* z){
-	double mag;
-	int unit = 1;
-
-	for(int i = 0; i < N; i++) {
-		mag = x[i]*x[i] + y[i]*y[i] + z[i]*z[i];
-
-		if(abs(mag - 1.0) > 0.001){
-			unit = -1;
-		}
-	}
-
-	return unit;
-}
-
-/*  Generate a random double between dMin and dMax							  */
-double dRand(double dMin, double dMax){
-	double d = (double) rand() / RAND_MAX;
-	return dMin + d * (dMax - dMin);
-}
-
-void print_energies(){
-	cout << "ENERGIES" << endl << endl;
-
-	cout << "K = " << K << endl;
-	cout << "V = " << V << endl;
-	cout << "E = " << E << endl;
-
-	cout << endl;
-}
-
-void print_global_variables(){
-	cout << "GLOBAL VARIABLES" << endl << endl;
-	
-	cout << "N = " << N << endl << endl;
-
-	cout << "num_steps = " << num_steps << endl;
-	cout << "dt = " << dt << endl;
-	cout << "temp_init = " << temp_init << endl << endl;
-
-	cout << "L = " << L << endl << endl;
-
-	cout << "M = " << M << endl;
-	cout << "I = " << I << endl << endl;
-
-	cout << "KB = " << KB << endl << endl;
-
-	cout << "K = " << K << endl;
-	cout << "V = " << V << endl;
-	cout << "E = " << E << endl;
-	cout << "P = " << P << endl;
-	cout << "T = " << T << endl;
-
-	cout << endl;
-}
-
-void print_temp(){
-	cout << "TEMPERATURE" << endl << endl;
-
-	cout << "T = " << T << endl;
-
-	cout << endl;
-}
-
-//  Write the positions and orientations to a file for display puposes
-void write_vectors(double* x, double* y, double* z,
-				   double* ex, double* ey, double* ez){
-	ofstream o;
-	o.open("vector.dat", ios::app);
-	for(int i = 0; i < N; i++){
-		o << x[i] << "\t" << y[i] << "\t" << z[i] << "\t"
-		  << ex[i] << "\t" << ey[i] << "\t" << ez[i] << endl;
-	}
-	//  Need extra lines for gnuplot to recognize blocks	
-	o << endl << endl << endl;
-}
