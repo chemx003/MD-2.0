@@ -27,9 +27,9 @@ using namespace std;
 	void verlet (double* x, double* y, double* z,
 			  	double* xOld, double* yOld, double* zOld,
 			  	double* ex, double* ey, double* ez,
-			  	double* exOld, double* eyOld, double* ezOld);
-
-//  These wil eventually get put into a header file
+			  	double* exOld, double* eyOld, double* ezOld,
+			  	double* fx, double* fy, double* fz,
+			  	double* gx, double* gy, double* gz);
 /*----------------------------------------------------------------------------*/
 
 
@@ -37,7 +37,7 @@ using namespace std;
 //  Simulation Parameters
 int 	N			= 25;			//  Number of particles
 
-double 	num_steps 	= 10, 		//  Number of timesteps
+double 	num_steps 	= 1, 		//  Number of timesteps
 	   	dt 			= 0.0015, 		//  Length of time step
 	   	temp_init 	= 1.5,			//  Initial temperature
 
@@ -79,25 +79,12 @@ int main(){
 	init(x, y, z, xOld, yOld, zOld,
 		 ex, ey, ez, exOld, eyOld, ezOld);			//  Initialize
 
-	calc_E();
-	calc_temp();
-
-	print_energies();
-	print_temp();
-
-	write_vectors(x, y, z, ex, ey, ez);
-
-	if(check_unit_length(ex, ey, ez) == -1){
-		cout << "ORIENTATION VECTORS DO NOT HAVE UNIT LENGTH" << endl << endl;
-	}
-
-	if(check_unit_length(exOld, eyOld, ezOld) == -1){
-		cout << "OLD ORIENTATION VECTORS DO NOT HAVE UNIT LENGTH" <<endl <<endl;
-	}
-
 	for(int i = 0; i < num_steps; i++) {
-		/*gb(); 		//  Calculate the forces and torques
-		verlet(); 	//  Integrate the eqns of motion	*/
+		/*gb(); 		//  Calculate the forces and torques*/
+		verlet(x, y, z, xOld, yOld, zOld,
+			   ex, ey, ez, exOld, eyOld, ezOld,
+			   fx, fy, fz,
+			   gx, gy, gz); 	//  Integrate the eqns of motion	
 	}
 	
 	//  Analysis & Post-Processing
@@ -238,4 +225,92 @@ void init	(double* x, double* y, double* z,
 	}
 }
 
+/*  Calculate the new positions and orientations. Update the kinetic energy.
+ *  Applies periodic boundary conditions.*/
+void verlet	(double* x, double* y, double* z,
+			  	double* xOld, double* yOld, double* zOld,
+			  	double* ex, double* ey, double* ez,
+			  	double* exOld, double* eyOld, double* ezOld,
+			  	double* fx, double* fy, double* fz,
+			  	double* gx, double* gy, double* gz){
 
+	double	xNew, yNew, zNew,			//  Place holders for position
+			exNew, eyNew, ezNew,		//  Place holders for orientation
+
+			vxi, vyi, vzi,				//  Velocities at current timestep
+			uxi, uyi, uzi,				//  Ang. velocities at current timestep
+
+			d1, d2, lm;					//  Dot products and the lagrange mult.
+
+	//  Reset kinetic energy
+	K = 0;
+
+	//  Calculations
+	for(int i = 0; i < N; i++) {
+		//  New postions
+		xNew = 2*x[i] - xOld[i] + fx[i]*dt*dt/M;
+		yNew = 2*y[i] - yOld[i] + fy[i]*dt*dt/M;
+		zNew = 2*z[i] - zOld[i] + fz[i]*dt*dt/M;
+
+		//  Store old positions and update current positions
+		xOld[i] = x[i]; yOld[i] = y[i]; zOld[i] = z[i];
+		x[i] = xNew; y[i] = yNew; z[i] = zNew;
+
+		//  Velocities at the current timestep
+		vxi = (x[i] - xOld[i]) / dt;
+		vyi = (y[i] - yOld[i]) / dt;
+		vzi = (z[i] - zOld[i]) / dt; 
+
+		//  New Orientations
+		exNew = 2*ex[i] - exOld[i] + gx[i]*dt*dt/I;
+		eyNew = 2*ey[i] - eyOld[i] + gy[i]*dt*dt/I;
+		ezNew = 2*ez[i] - ezOld[i] + gz[i]*dt*dt/I;
+
+		//  Calculate the lagrange multiplier
+		d1 = ex[i]*exNew + ey[i]*eyNew + ez[i]*ezNew;
+		d2 = exNew*exNew + eyNew*eyNew + ezNew*ezNew;
+		lm = -d1 + sqrt(d1*d1 - d2 + 1.0);
+
+		//  Adjust new orientations
+		exNew = exNew + ex[i]*lm; 
+		eyNew = eyNew + ey[i]*lm;
+		ezNew = ezNew + ez[i]*lm;
+
+		//  Store old orientations and update current orientations
+		exOld[i] = ex[i]; eyOld[i] = ey[i]; ezOld[i] = ez[i];
+		ex[i] = exNew; ey[i] = eyNew; ez[i] = ezNew;
+
+		//  Ang. velocities at the current timestep
+		uxi = (ex[i] - exOld[i]) / dt;
+		uyi = (ey[i] - eyOld[i]) / dt;
+		uzi = (ez[i] - ezOld[i]) / dt;
+
+		//  Update Kinetic Energy
+		K = K + 0.5 * M * (vxi*vxi + vyi*vyi + vzi*vzi)
+			+ 0.5 * I * (uxi*uxi + uyi*uyi +vzi*vzi);
+	}
+
+	// Apply periodic boundary conditions
+	for(int i = 0; i < N; i++) {
+		if(x[i] < 0.0){
+			x[i] = x[i] + L;
+		}
+		else if(x[i] > L){
+			x[i] = x[i] - L;
+		}
+
+		if(y[i] < 0.0){
+			y[i] = y[i] + L;
+		}
+		else if(y[i] > L){
+			y[i] = y[i] - L;
+		}
+
+		if(z[i] < 0.0){
+			z[i] = z[i] + L;
+		}
+		else if(z[i] > L){
+			z[i] = z[i] - L;
+		}
+	}
+}
