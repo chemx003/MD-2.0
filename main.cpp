@@ -10,7 +10,9 @@ using namespace std;
 /*-----------------------  Function Declarations  ----------------------------*/
 //  Gay-Berne: Calulate the forces and torques
 	void gb		(double* x, double* y, double* z,
-				double* ex, double* ey, double* ez);	
+				double* ex, double* ey, double* ez,
+				double* fx, double* fy, double* fz,
+				double* gx, double* gy, double* gz);	
 
 //  Initialize the simulation
 	void init	(double* x, double* y, double* z,
@@ -89,6 +91,155 @@ int main(){
 	
 	//  Analysis & Post-Processing
 	//pc();			//  Calculate PCF*/
+}
+
+//  Gay-Berne: Calulate the forces and torques
+void gb		(double* x, double* y, double* z,
+			double* ex, double* ey, double* ez,
+			double* fx, double* fy, double* fz,
+			double* gx, double* gy, double* gz){
+	
+	double	mu, nu,					//  Exponents -adustable parameters
+			kappa, xappa, 			//  Ratio of length and energy parameters
+			chi, xhi, 				// 	Shape anisotropy parameters
+
+			rc, cutterm, dcutterm	//  Cuttoff distance
+
+			dx, dy, dz,				//	Components of rij
+			rij, rij2,				// 	Magnitude of rij
+			hx, hy, hz,				//	Components of rij unit vector
+
+			si, sj, sij,			//  Scalar products with e_i, e_j, and r_ij
+			sp, sm,					//  Sums and differences of si and sj
+			spchi, smchi,			// 	sp and sm divided by the term with chi
+			spxhi, smxhi,			//  " with xhi
+
+			sigma,					//  Distance parameter
+
+			//  The well depth and its derivatives
+			epsilon, eps1, eps2, deps_dsi, deps_dsj, deps_dsij,
+
+			//  Rho and its multiples and derivatives
+			rho, rho6, rho12, rhoterm, drhoterm,
+
+			//  Derivatives of sigma
+			dsig_dsi, dsig_dsj, dsig_dsij, prefac,
+
+			//  Potential bewtween pair and derivatives
+			pot, dpot_drij, dpot_dsi, dpot_dsj, dpot_dsij,
+
+			//  Forces and torques between pairs
+			fxi, fyi, fzi, gx1, gy1, gz1, gx2, gy2, gz2;
+
+	/*----------------------Set Parameters-----------------------*/
+	mu = 2.0; nu = 1.0;
+	kappa = 3.0; xappa = 5.0; //  xappa is a touch suspicious
+
+	chi = (kappa*kappa - 1.0) / (kappa*kappa + 1.0);
+	xhi = (pow(xappa, 1.0/mu) - 1.0) / (pow(xappa, 1.0/mu) - 1.0);
+
+	rc = 3.0;
+
+	//  Example chooses eps0 and sigma_s equal 1 by units...
+	/*-----------------------------------------------------------*/
+
+	//  Resetting quantiies
+	for(int i = 0; i < N; i++) {
+		fx[i] = 0; fy[i] = 0; fz[i] = 0;
+		gx[i] = 0; gy[i] = 0; gz[i] = 0;
+	}
+	V = 0; P = 0;
+
+	//  Calculations
+	for(int i = 0; i < N-1 ; i++) {
+		for(int j = i+1; j<N; j++) {
+			//  Components of rij
+			dx = x[i] - x[j];
+			dy = y[i] - y[j];
+			dz = z[i] - z[j];
+
+			//  Apply minimum image critereon (trying a different method)
+			if(abs(dx) > 0.5*L){
+				dx = dx - L*(dx / abs(dx));
+			}
+
+			if(abs(dy) > 0.5*L){
+				dy = dy - L*(dy / abs(dy));
+			}
+			
+			if(abs(dz) > 0.5*L){
+				dz = dz - L*(dz / abs(dz));
+			}
+
+			//  Magnitude of rij
+			rij2 = dx*dx + dy*dy * dz*dz;
+			rij = sqrt(rij2);
+
+			//  Calculate the unit vector of rij
+			hx = dx / rij;
+			hy = dy / rij;
+			hz = dz / rij;
+
+			if(rij < rc){
+				//  Dot products, their sum/difference, and the fractions
+				si = hx*ex[i] + hy*ey[i] + hz*ez[i]; 
+				sj = hx*ex[j] + hy*ey[j] + hz*ez[j];
+				sp = si + sj; sm = si - sj;
+				sij = ex[i]*ex[j] + ey[i]*ey[j] + ez[i]*ez[j];
+				spchi = sp / (1.0 + chi*sij);
+				smchi = sm / (1.0 - chi*sij);
+				spxhi = sp / (1.0 + xhi*sij);
+				smxhi = sm / (1.0 - xhi*sij);
+
+				//  Distance parameter (sigma)
+				sigma = 1.0 / sqrt(1.0 - 0.5*xhi*(sp*spchi + sm*smchi));
+
+				//  Well depth (epsilon) !!Watch the notation!!
+				eps1 = 1.0 / sqrt(1.0 - (chi*chi*sij*sij));
+				eps2 = 1.0 - 0.5*xhi*(sp*spxhi + sm*smxhi);
+				epsilon = pow(eps1, nu) * pow(eps2, mu);
+
+				//  Potential at rij
+				rho = rij - sigma + 1.0;
+				rho6 = 1.0 / pow(rho, 6);
+				rho12 = rho6 * rho6;
+				rhoterm = 4.0 * (rho12 - rho6);
+				drhoterm = -24.0 * (2.0*rho12 - rho6) / rho;
+				pot = epsilon * rhoterm;
+
+				//  Potential at rc
+				rho = rc - sigma + 1.0;
+				rho6 = 1.0 / pow(rho, 6);
+				rho12 = rho6 * rho6;
+				cutterm = 4.0 * (rho12 - rho6);
+				dcutterm = -24.0 * (2.0*rho12 - rho6) / rho;
+				pot = pot - epsilon*cutterm;
+
+				//  Derivatives of sigma
+				prefac = 0.5 * chi * pow(sigma, 3);
+				dsig_dsi = prefac * (spchi + smchi);
+				dsig_dsj = prefac * (spchi + smchi);
+				prefac = prefac * (0.5*chi);
+				dsig_dsij = -prefac * (spchi*spchi - smchi*smchi);
+
+				//  Derivatives of epsilon
+				prefac = -mu * xhi * pow(eps1, nu) * pow(eps2, mu-1);
+				deps_dsi = prefac * (spxhi + smxhi);
+				deps_dsj = prefac * (spxhi - smxhi);
+				prefac = prefac * (0.5*xhi);
+				deps_dsij = -prefac * (spxhi*spxhi - smxhi*smxhi);
+				deps_dsij = deps_dsij 
+							+ nu*chi*chi*pow(eps1, nu+2)*pow(eps2, mu)*sij;
+
+				//  Derivatives of the potential
+				dpot_drij = epsilon * drhoterm;
+				dpot_dsi = rhoterm*deps_dsi - epsilon*drhoterm*dsig_dsi;
+				dpot_dsj = rhoterm*deps_dsj - epsilon*drhoterm*dsig_dsj;
+				dpot_dcij = rhoterm*deps_dcij - epsilon*drhoterm*dsig_dsij;
+
+			}
+		}
+	}
 }
 
 /*  Initialize particle positions, orientations, velocities, and angular 
@@ -213,7 +364,7 @@ void init	(double* x, double* y, double* z,
 		xOld[i] = x[i] - dt * vx[i];
 		yOld[i] = y[i] - dt * vy[i];
 		zOld[i] = z[i] - dt * vz[i];
-		/*I don't think this is going to be unit length but correcting to 
+		/*  I don't think this is going to be unit length but correcting to 
 		 * unit length might change the temperature/energy - TEST*/
 		exOld[i] = ex[i] - dt * ux[i];
 		eyOld[i] = ey[i] - dt * uy[i];
@@ -290,7 +441,7 @@ void verlet	(double* x, double* y, double* z,
 			+ 0.5 * I * (uxi*uxi + uyi*uyi +vzi*vzi);
 	}
 
-	// Apply periodic boundary conditions
+	//  Apply periodic boundary conditions
 	for(int i = 0; i < N; i++) {
 		if(x[i] < 0.0){
 			x[i] = x[i] + L;
