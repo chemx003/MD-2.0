@@ -37,13 +37,13 @@ using namespace std;
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N			= 25;			//  Number of particles
+int 	N			= 100;			//  Number of particles
 
-double 	num_steps 	= 1, 		//  Number of timesteps
+double 	num_steps 	= 2000, 		//  Number of timesteps
 	   	dt 			= 0.0015, 		//  Length of time step
 	   	temp_init 	= 1.5,			//  Initial temperature
 
-	   	L			= 7.0,			//  Length of simulation box
+	   	L			= 6.0,			//  Length of simulation box
 
 	   	M			= 1.0,			//	Particle mass
 	  	I			= 1.0,			//  Particle moment of inertia
@@ -81,14 +81,28 @@ int main(){
 	init(x, y, z, xOld, yOld, zOld,
 		 ex, ey, ez, exOld, eyOld, ezOld);			//  Initialize
 
+	write_vectors(x, y, z, ex, ey, ez);
+
+	calc_E(); print_energies();
+	calc_temp(); print_temp();
+
 	for(int i = 0; i < num_steps; i++) {
-		/*gb(); 		//  Calculate the forces and torques*/
+		gb(x, y, z,
+		   ex, ey, ez,
+		   fx, fy, fz,
+		   gx, gy, gz); 		//  Calculate the forces and torques
+
 		verlet(x, y, z, xOld, yOld, zOld,
 			   ex, ey, ez, exOld, eyOld, ezOld,
 			   fx, fy, fz,
 			   gx, gy, gz); 	//  Integrate the eqns of motion	
+
+		write_vectors(x, y, z, ex, ey, ez);
 	}
-	
+
+	calc_E(); print_energies();
+	calc_temp(); print_temp();
+
 	//  Analysis & Post-Processing
 	//pc();			//  Calculate PCF*/
 }
@@ -103,7 +117,7 @@ void gb		(double* x, double* y, double* z,
 			kappa, xappa, 			//  Ratio of length and energy parameters
 			chi, xhi, 				// 	Shape anisotropy parameters
 
-			rc, cutterm, dcutterm	//  Cuttoff distance
+			rc, cutterm, dcutterm,	//  Cuttoff distance
 
 			dx, dy, dz,				//	Components of rij
 			rij, rij2,				// 	Magnitude of rij
@@ -171,8 +185,8 @@ void gb		(double* x, double* y, double* z,
 				dz = dz - L*(dz / abs(dz));
 			}
 
-			//  Magnitude of rij
-			rij2 = dx*dx + dy*dy * dz*dz;
+			//  magnitude of rij
+			rij2 = dx*dx + dy*dy + dz*dz;
 			rij = sqrt(rij2);
 
 			//  Calculate the unit vector of rij
@@ -199,7 +213,8 @@ void gb		(double* x, double* y, double* z,
 				eps2 = 1.0 - 0.5*xhi*(sp*spxhi + sm*smxhi);
 				epsilon = pow(eps1, nu) * pow(eps2, mu);
 
-				//  Potential at rij
+				/*  Potential at rij - !!!something is off here !!!
+				 *  some of the rij are < 1									*/
 				rho = rij - sigma + 1.0;
 				rho6 = 1.0 / pow(rho, 6);
 				rho12 = rho6 * rho6;
@@ -231,12 +246,54 @@ void gb		(double* x, double* y, double* z,
 				deps_dsij = deps_dsij 
 							+ nu*chi*chi*pow(eps1, nu+2)*pow(eps2, mu)*sij;
 
-				//  Derivatives of the potential
+				//  Derivatives of the potential at rij
 				dpot_drij = epsilon * drhoterm;
 				dpot_dsi = rhoterm*deps_dsi - epsilon*drhoterm*dsig_dsi;
 				dpot_dsj = rhoterm*deps_dsj - epsilon*drhoterm*dsig_dsj;
-				dpot_dcij = rhoterm*deps_dcij - epsilon*drhoterm*dsig_dsij;
+				dpot_dsij = rhoterm*deps_dsij - epsilon*drhoterm*dsig_dsij;
 
+				//  Forces at rij
+				fxi = -dpot_drij*hx - dpot_dsi*(ex[i] - si*hx)/rij
+					  - dpot_dsj*(ex[j] - sj*hx)/rij;
+				fyi = -dpot_drij*hy - dpot_dsi*(ey[i] - si*hy)/rij
+					  - dpot_dsj*(ey[j] - sj*hy)/rij;
+				fzi = -dpot_drij*hz - dpot_dsi*(ez[i] - si*hz)/rij
+					  - dpot_dsj*(ez[j] - sj*hz)/rij;
+
+				//  Torques at rij
+				gx1 = dpot_dsi*hx + dpot_dsij*ex[j];
+				gy1 = dpot_dsi*hy + dpot_dsij*ey[j];
+				gz1 = dpot_dsi*hz + dpot_dsij*ez[j];
+
+				gx2 = dpot_dsj*hx + dpot_dsij*ex[i];
+				gy2 = dpot_dsj*hy + dpot_dsij*ey[i];
+				gz2 = dpot_dsj*hz + dpot_dsij*ez[i];
+
+				//  Derivatives of the potential at the cuttoff
+				dpot_drij = epsilon * dcutterm;
+				dpot_dsi = cutterm*deps_dsi - epsilon*dcutterm*dsig_dsi;
+				dpot_dsj = cutterm*deps_dsj - epsilon*dcutterm*dsig_dsj;
+				dpot_dsij = cutterm*deps_dsij - epsilon*dcutterm*dsig_dsij;
+
+				//  Forces at cuttoff
+				fxi = fxi + dpot_dsi*(ex[i] - si*hx)/rij
+					  + dpot_dsj*(ex[j] - sj*hx)/rij;
+				fyi = fyi + dpot_dsi*(ey[i] - si*hy)/rij
+					  + dpot_dsj*(ey[j] - sj*hy)/rij;
+				fzi = fzi + dpot_dsi*(ez[i] - si*hz)/rij
+					  + dpot_dsj*(ez[j] - sj*hz)/rij;
+
+				//  Torques at cuttoff
+				gx1 = gx1 - dpot_dsi*hx - dpot_dsij*ex[j];
+				gy1 = gy1 - dpot_dsi*hy - dpot_dsij*ey[j];
+				gz1 = gz1 - dpot_dsi*hz - dpot_dsij*ez[j];
+
+				gx2 = gx2 - dpot_dsj*hx - dpot_dsij*ex[i];
+				gy2 = gy2 - dpot_dsj*hy - dpot_dsij*ey[i];
+				gz2 = gz2 - dpot_dsj*hz - dpot_dsij*ez[i];
+
+				// Calculate potential
+				V = V + pot;
 			}
 		}
 	}
@@ -284,9 +341,9 @@ void init	(double* x, double* y, double* z,
 			for(int k = 0; k< NUM_LINE; k++) {
 				if(p<N){
 					//  Assign lattice sites to particle
-					x[p] = (i + 0.5 + dRand(-0.1, 0.1)) * a;
-					y[p] = (j + 0.5 + dRand(-0.1, 0.1)) * a;
-					z[p] = (k + 0.5 + dRand(-0.1, 0.1)) * a;
+					x[p] = (i + 0.5) * a;
+					y[p] = (j + 0.5) * a;
+					z[p] = (k + 0.5) * a;
 
 					//  Assign random orientations
 					ex[p] = dRand(-1.0, 1.0);
