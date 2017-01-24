@@ -37,13 +37,13 @@ using namespace std;
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N			= 100;			//  Number of particles
+int 	N			= 250;			//  Number of particles
 
-double 	num_steps 	= 2000, 		//  Number of timesteps
+double 	num_steps 	= 2500, 		//  Number of timesteps
 	   	dt 			= 0.0015, 		//  Length of time step
 	   	temp_init 	= 1.5,			//  Initial temperature
 
-	   	L			= 6.0,			//  Length of simulation box
+	   	L			= 10.0,			//  Length of simulation box
 
 	   	M			= 1.0,			//	Particle mass
 	  	I			= 1.0,			//  Particle moment of inertia
@@ -74,7 +74,7 @@ int main(){
 			gx[N], gy[N], gz[N];			//  Gorques
 
 	//  Iteration
-	srand(time(NULL));
+	srand(1);
 
 	print_global_variables();
 
@@ -98,6 +98,9 @@ int main(){
 			   gx, gy, gz); 	//  Integrate the eqns of motion	
 
 		write_vectors(x, y, z, ex, ey, ez);
+
+		calc_E(); write_energies(i);
+		cout << V << endl;
 	}
 
 	calc_E(); print_energies();
@@ -206,15 +209,14 @@ void gb		(double* x, double* y, double* z,
 				smxhi = sm / (1.0 - xhi*sij);
 
 				//  Distance parameter (sigma)
-				sigma = 1.0 / sqrt(1.0 - 0.5*xhi*(sp*spchi + sm*smchi));
+				sigma = 1.0 / sqrt(1.0 - 0.5*chi*(sp*spchi + sm*smchi));
 
 				//  Well depth (epsilon) !!Watch the notation!!
 				eps1 = 1.0 / sqrt(1.0 - (chi*chi*sij*sij));
 				eps2 = 1.0 - 0.5*xhi*(sp*spxhi + sm*smxhi);
 				epsilon = pow(eps1, nu) * pow(eps2, mu);
 
-				/*  Potential at rij - !!!something is off here !!!
-				 *  some of the rij are < 1									*/
+				/*  Potential at rij										  */
 				rho = rij - sigma + 1.0;
 				rho6 = 1.0 / pow(rho, 6);
 				rho12 = rho6 * rho6;
@@ -502,23 +504,29 @@ void verlet	(double* x, double* y, double* z,
 	for(int i = 0; i < N; i++) {
 		if(x[i] < 0.0){
 			x[i] = x[i] + L;
+			xOld[i] = xOld[i] + L;
 		}
 		else if(x[i] > L){
 			x[i] = x[i] - L;
+			xOld[i] = xOld[i] - L;
 		}
 
 		if(y[i] < 0.0){
 			y[i] = y[i] + L;
+			yOld[i] = yOld[i] +L;
 		}
 		else if(y[i] > L){
 			y[i] = y[i] - L;
+			yOld[i] = yOld[i] - L;
 		}
 
 		if(z[i] < 0.0){
 			z[i] = z[i] + L;
+			zOld[i] = zOld[i] + L;
 		}
 		else if(z[i] > L){
 			z[i] = z[i] - L;
+			zOld[i] = zOld[i] - L;
 		}
 	}
 }

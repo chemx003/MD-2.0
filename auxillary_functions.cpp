@@ -7,23 +7,23 @@ using namespace std;
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-extern int 	N;			//  Number of particles
+extern int 	N;								//  Number of particles
 
-extern double 	num_steps, 		//  Number of timesteps
-	   	dt, 		//  Length of time step
-	   	temp_init,			//  Initial temperature
+extern double 	num_steps, 					//  Number of timesteps
+	   	dt, 								//  Length of time step
+	   	temp_init,							//  Initial temperature
 
-	   	L,			//  Length of simulation box
+	   	L,									//  Length of simulation box
 
-	   	M,			//	Particle mass
-	  	I,			//  Particle moment of inertia
+	   	M,									//	Particle mass
+	  	I,									//  Particle moment of inertia
 
-		KB;			//  Boltzmann Constant
+		KB;									//  Boltzmann Constant
 
 //  Data
 extern double	K, V, E, 					//  Pot, kin, tot energies
-		P,							//  Pressure
-		T;							//  Temperature
+				P,							//  Pressure
+				T;							//  Temperature
 
 /*----------------------------------------------------------------------------*/
 
@@ -103,15 +103,29 @@ void print_temp(){
 	cout << endl;
 }
 
+//  Write the energies to a file 'time' refers to the current timestep
+void write_energies(int time){
+	ofstream o;
+	o.open("energy.dat", ios::app);
+	
+	o << time << "\t" << V << "\t" << K << "\t" << E << endl;
+
+	o.close();
+}
+
 //  Write the positions and orientations to a file for display puposes
 void write_vectors(double* x, double* y, double* z,
 				   double* ex, double* ey, double* ez){
 	ofstream o;
 	o.open("vector.dat", ios::app);
+
 	for(int i = 0; i < N; i++){
 		o << x[i] << "\t" << y[i] << "\t" << z[i] << "\t"
 		  << ex[i] << "\t" << ey[i] << "\t" << ez[i] << endl;
 	}
+
 	//  Need extra lines for gnuplot to recognize blocks	
 	o << endl << endl << endl;
+
+	o.close();
 }
