@@ -23,6 +23,9 @@
 //  Write energies
 	void write_energies(int time);
 
+//  Write data for the pair correlation function
+	void write_pcf(double* x, double* y, double* z, double histo[][2], int avg);
+
 //  Write the positions and orientations to a file
 	void write_vectors(double* x, double* y, double* z,
 					   double* ex, double* ey, double* ez);

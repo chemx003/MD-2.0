@@ -37,23 +37,26 @@ using namespace std;
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N			= 250;			//  Number of particles
+int 	N				= 250,			//  Number of particles
+		pcf_bins		= 100,			//  Number of bins for pcf
+		pcf_num_steps	= 50;			// 	Steps to avg pcf over
 
-double 	num_steps 	= 2500, 		//  Number of timesteps
-	   	dt 			= 0.0015, 		//  Length of time step
-	   	temp_init 	= 1.5,			//  Initial temperature
+double 	num_steps 		= 1000, 		//  Number of timesteps
+	   	dt 				= 0.0015, 		//  Length of time step
+	   	temp_init 		= 1.5,			//  Initial temperature
 
-	   	L			= 10.0,			//  Length of simulation box
+	   	L				= 10.0,			//  Length of simulation box
 
-	   	M			= 1.0,			//	Particle mass
-	  	I			= 1.0,			//  Particle moment of inertia
+	   	M				= 1.0,			//	Particle mass
+	  	I				= 1.0,			//  Particle moment of inertia
 
-		KB			= 1.0;			//  Boltzmann Constant
+		KB				= 1.0,			//  Boltzmann Constant
+		PI				= 3.14159265358979; //  Pi
 
 //  Data
-double	K, V, E, 					//  Pot, kin, tot energies
-		P,							//  Pressure
-		T;							//  Temperature
+double	K, V, E, 						//  Pot, kin, tot energies
+		P,								//  Pressure
+		T;								//  Temperature
 
 /*----------------------------------------------------------------------------*/
 
@@ -71,7 +74,8 @@ int main(){
 			exOld[N], eyOld[N], ezOld[N],	//  Particle orient at n-1
 
 			fx[N], fy[N], fz[N],			//  Forces
-			gx[N], gy[N], gz[N];			//  Gorques
+			gx[N], gy[N], gz[N],			//  Gorques
+			histo[pcf_bins][2];					//  Histogram for pcf
 
 	//  Iteration
 	srand(1);
@@ -100,11 +104,16 @@ int main(){
 		write_vectors(x, y, z, ex, ey, ez);
 
 		calc_E(); write_energies(i);
-		cout << V << endl;
+
+		if(num_steps-i <= pcf_num_steps){
+			write_pcf(x, y, z, histo, 0);
+		}
 	}
 
 	calc_E(); print_energies();
 	calc_temp(); print_temp();
+
+	write_pcf(x, y, z, histo, 1);
 
 	//  Analysis & Post-Processing
 	//pc();			//  Calculate PCF*/
@@ -191,6 +200,8 @@ void gb		(double* x, double* y, double* z,
 			//  magnitude of rij
 			rij2 = dx*dx + dy*dy + dz*dz;
 			rij = sqrt(rij2);
+
+			//if(rij <= 1.0){cout << "OVERLAP!!!" << endl;}
 
 			//  Calculate the unit vector of rij
 			hx = dx / rij;
