@@ -24,7 +24,7 @@ extern double 	num_steps, 					//  Number of timesteps
 		PI;
 
 //  Data
-extern double	K, V, E, 					//  Pot, kin, tot energies
+extern double	KT, KR, K, V, E, 					//  Pot, kin, tot energies
 				P,							//  Pressure
 				T;							//  Temperature
 
@@ -66,6 +66,8 @@ double dRand(double dMin, double dMax){
 void print_energies(){
 	cout << "ENERGIES" << endl << endl;
 
+	cout << "KT = " << KT << endl;
+	cout << "KR = " << KR << endl;
 	cout << "K = " << K << endl;
 	cout << "V = " << V << endl;
 	cout << "E = " << E << endl;
@@ -89,6 +91,8 @@ void print_global_variables(){
 
 	cout << "KB = " << KB << endl << endl;
 
+	cout << "KT = " << KT << endl;
+	cout << "KR = " << KR << endl;
 	cout << "K = " << K << endl;
 	cout << "V = " << V << endl;
 	cout << "E = " << E << endl;

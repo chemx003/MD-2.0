@@ -41,11 +41,11 @@ int 	N				= 256,			//  Number of particles
 		pcf_bins		= 200,			//  Number of bins for pcf
 		pcf_num_steps	= 50;			// 	Steps to avg pcf over
 
-double 	num_steps 		= 10000, 		//  Number of timesteps
+double 	num_steps 		= 1000, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
-	   	temp_init 		= 1.0,			//  Initial temperature
+	   	temp_init 		= 1.5,			//  Initial temperature
 
-	   	L				= 13.0,			//  Length of simulation box
+	   	L				= 10.0,			//  Length of simulation box
 
 	   	M				= 1.0,			//	Particle mass
 	  	I				= 1.0,			//  Particle moment of inertia
@@ -113,8 +113,10 @@ int main(){
 	calc_E(); print_energies();
 	calc_temp(); print_temp();
 
-	//  Analysis & Post-Processing
 	write_pcf(x, y, z, histo, 1);
+
+	//  Analysis & Post-Processing
+	//pc();			//  Calculate PCF*/
 }
 
 //  Gay-Berne: Calulate the forces and torques
@@ -156,8 +158,8 @@ void gb		(double* x, double* y, double* z,
 			fxi, fyi, fzi, gx1, gy1, gz1, gx2, gy2, gz2;
 
 	/*----------------------Set Parameters-----------------------*/
-	mu = 2.0; nu = 1.0;
-	kappa = 3.0; xappa = 5.0; //  xappa is a touch suspicious
+	mu = 1.0; nu = 1.0;
+	kappa = 1.0; xappa = 1.0; //  xappa is a touch suspicious
 
 	chi = (kappa*kappa - 1.0) / (kappa*kappa + 1.0);
 	xhi = (pow(xappa, 1.0/mu) - 1.0) / (pow(xappa, 1.0/mu) + 1.0);
@@ -208,21 +210,21 @@ void gb		(double* x, double* y, double* z,
 
 			if(rij < rc){
 				//  Dot products, their sum/difference, and the fractions
-				si = hx*ex[i] + hy*ey[i] + hz*ez[i]; 
+				/*si = hx*ex[i] + hy*ey[i] + hz*ez[i]; 
 				sj = hx*ex[j] + hy*ey[j] + hz*ez[j];
 				sp = si + sj; sm = si - sj;
 				sij = ex[i]*ex[j] + ey[i]*ey[j] + ez[i]*ez[j];
 				spchi = sp / (1.0 + chi*sij);
 				smchi = sm / (1.0 - chi*sij);
 				spxhi = sp / (1.0 + xhi*sij);
-				smxhi = sm / (1.0 - xhi*sij);
+				smxhi = sm / (1.0 - xhi*sij);*/
 
 				//  Distance parameter (sigma)
-				sigma = 1.0/ sqrt(1.0 - 0.5*chi*(sp*spchi + sm*smchi));
+				sigma = 1.0;// / sqrt(1.0 - 0.5*chi*(sp*spchi + sm*smchi));
 
 				//  Well depth (epsilon) !!Watch the notation!!
-				eps1 = 1.0/ sqrt(1.0 - (chi*chi*sij*sij));
-				eps2 = 1.0 - 0.5*xhi*(sp*spxhi + sm*smxhi);
+				eps1 = 1.0;// / sqrt(1.0 - (chi*chi*sij*sij));
+				eps2 = 1.0;// - 0.5*xhi*(sp*spxhi + sm*smxhi);
 				epsilon = pow(eps1, nu) * pow(eps2, mu);
 
 				/*  Potential at rij										  */
@@ -233,7 +235,7 @@ void gb		(double* x, double* y, double* z,
 				drhoterm = -24.0 * (2.0*rho12 - rho6) / rho;
 				pot = epsilon * rhoterm;
 
-				//  Potential at rc
+			/*	//  Potential at rc
 				rho = rc - sigma + 1.0;
 				rho6 = 1.0 / pow(rho, 6);
 				rho12 = rho6 * rho6;
@@ -255,32 +257,32 @@ void gb		(double* x, double* y, double* z,
 				prefac = prefac * (0.5*xhi);
 				deps_dsij = -prefac * (spxhi*spxhi - smxhi*smxhi);
 				deps_dsij = deps_dsij 
-							+ nu*chi*chi*pow(eps1, nu+2)*pow(eps2, mu)*sij;
+							+ nu*chi*chi*pow(eps1, nu+2)*pow(eps2, mu)*sij;*/
 
 				//  Derivatives of the potential at rij
 				dpot_drij = epsilon * drhoterm;
-				dpot_dsi = rhoterm*deps_dsi - epsilon*drhoterm*dsig_dsi;
+				/* dpot_dsi = rhoterm*deps_dsi - epsilon*drhoterm*dsig_dsi;
 				dpot_dsj = rhoterm*deps_dsj - epsilon*drhoterm*dsig_dsj;
-				dpot_dsij = rhoterm*deps_dsij - epsilon*drhoterm*dsig_dsij;
+				dpot_dsij = rhoterm*deps_dsij - epsilon*drhoterm*dsig_dsij;*/
 
 				//  Forces at rij
-				fxi = -dpot_drij*hx- dpot_dsi*(ex[i] - si*hx)/rij
-					  - dpot_dsj*(ex[j] - sj*hx)/rij;
-				fyi = -dpot_drij*hy - dpot_dsi*(ey[i] - si*hy)/rij
-					  - dpot_dsj*(ey[j] - sj*hy)/rij;
-				fzi = -dpot_drij*hz - dpot_dsi*(ez[i] - si*hz)/rij
-					  - dpot_dsj*(ez[j] - sj*hz)/rij;
+				fxi = -dpot_drij*hx; /*- dpot_dsi*(ex[i] - si*hx)/rij
+					  - dpot_dsj*(ex[j] - sj*hx)/rij;*/
+				fyi = -dpot_drij*hy; /* - dpot_dsi*(ey[i] - si*hy)/rij
+					  - dpot_dsj*(ey[j] - sj*hy)/rij;*/
+				fzi = -dpot_drij*hz; /* - dpot_dsi*(ez[i] - si*hz)/rij
+					  - dpot_dsj*(ez[j] - sj*hz)/rij;*/
 
-				//  Torques at rij
+			/*	//  Torques at rij
 				gx1 = dpot_dsi*hx + dpot_dsij*ex[j];
 				gy1 = dpot_dsi*hy + dpot_dsij*ey[j];
 				gz1 = dpot_dsi*hz + dpot_dsij*ez[j];
 
 				gx2 = dpot_dsj*hx + dpot_dsij*ex[i];
 				gy2 = dpot_dsj*hy + dpot_dsij*ey[i];
-				gz2 = dpot_dsj*hz + dpot_dsij*ez[i]; 
+				gz2 = dpot_dsj*hz + dpot_dsij*ez[i]; */
 
-				//  Derivatives of the potential at the cuttoff
+		/*		//  Derivatives of the potential at the cuttoff
 				dpot_drij = epsilon * dcutterm;
 				dpot_dsi = cutterm*deps_dsi - epsilon*dcutterm*dsig_dsi;
 				dpot_dsj = cutterm*deps_dsj - epsilon*dcutterm*dsig_dsj;
@@ -301,7 +303,7 @@ void gb		(double* x, double* y, double* z,
 
 				gx2 = gx2 - dpot_dsj*hx - dpot_dsij*ex[i];
 				gy2 = gy2 - dpot_dsj*hy - dpot_dsij*ey[i];
-				gz2 = gz2 - dpot_dsj*hz - dpot_dsij*ez[i];
+				gz2 = gz2 - dpot_dsj*hz - dpot_dsij*ez[i];*/
 
 				//  Write forces and torques
 				fx[i] = fx[i] + fxi;
@@ -310,15 +312,16 @@ void gb		(double* x, double* y, double* z,
 
 				fx[j] = fx[j] - fxi;
 				fy[j] = fy[j] - fyi;
-				fz[j] = fz[j] - fzi;		
+				fz[j] = fz[j] - fzi;
+				
 
-				gx[i] = gx[i] - gx1;
+			/*	gx[i] = gx[i] - gx1;
 				gy[i] = gy[i] - gy1;
 				gz[i] = gz[i] - gz1;
 
 				gx[j] = gx[j] - gx2;
 				gy[j] = gy[j] - gy2;
-				gz[j] = gz[j] - gz2;
+				gz[j] = gz[j] - gz2;*/
 
 				// Calculate potential
 				V = V + pot;
@@ -373,25 +376,25 @@ void init	(double* x, double* y, double* z,
 					y[p] = (j + 0.5) * a;
 					z[p] = (k + 0.5) * a;
 
-					//  Assign random orientations
-					ex[p] = 1; //dRand(-1.0, 1.0);
-					ey[p] = 1; //dRand(-1.0, 1.0);
-					ez[p] = 1; //dRand(-1.0, 1.0); 
+					/*//  Assign random orientations
+					ex[p] = dRand(-1.0, 1.0);
+					ey[p] = dRand(-1.0, 1.0);
+					ez[p] = dRand(-1.0, 1.0); 
 
 					mag = sqrt(ex[p]*ex[p] + ey[p]*ey[p] + ez[p]*ez[p]);
 
 					ex[p] = ex[p] / mag;
 					ey[p] = ey[p] / mag;
-					ez[p] = ez[p] / mag;
+					ez[p] = ez[p] / mag;*/
 
 					//  Assign random velocities and ang velocites
 					vx[p] = dRand(-0.5, 0.5);
 					vy[p] = dRand(-0.5, 0.5);
 					vz[p] = dRand(-0.5, 0.5);
 
-					ux[p] = dRand(-0.5, 0.5);
+				/*	ux[p] = dRand(-0.5, 0.5);
 					uy[p] = dRand(-0.5, 0.5);
-					uz[p] = dRand(-0.5, 0.5); 
+					uz[p] = dRand(-0.5, 0.5); */
 
 					//  Sum for corrections to energy and mtm
 					sumVx = sumVx + vx[p];
@@ -402,9 +405,9 @@ void init	(double* x, double* y, double* z,
 					sumVy2 = sumVy2 + vy[p] * vy[p];
 					sumVz2 = sumVz2 + vz[p] * vz[p];
 
-					sumUx2 = sumUx2 + ux[p] * ux[p];
+				/*	sumUx2 = sumUx2 + ux[p] * ux[p];
 					sumUy2 = sumUy2 + uy[p] * uy[p];
-					sumUz2 = sumUz2 + uz[p] * uz[p]; 
+					sumUz2 = sumUz2 + uz[p] * uz[p]; */
 				}
 
 				//  Add to particle count
@@ -418,16 +421,16 @@ void init	(double* x, double* y, double* z,
 
 	//  Current mean squared velocities
 	sumVx2 = sumVx2 / N; sumVy2 = sumVy2 / N; sumVz2 = sumVz2 / N;
-	sumUx2 = sumUx2 / N; sumUy2 = sumUy2 / N; sumUz2 = sumUz2 / N; 
+/*	sumUx2 = sumUx2 / N; sumUy2 = sumUy2 / N; sumUz2 = sumUz2 / N; */
 
 	//  Calculate scaling factors
 	sfvx = sqrt(KB * temp_init / sumVx2);
 	sfvy = sqrt(KB * temp_init / sumVy2);
 	sfvz = sqrt(KB * temp_init / sumVz2);
 
-	sfux = sqrt(KB * temp_init / sumUx2);
+/*	sfux = sqrt(KB * temp_init / sumUx2);
 	sfuy = sqrt(KB * temp_init / sumUy2);
-	sfuz = sqrt(KB * temp_init / sumUz2);
+	sfuz = sqrt(KB * temp_init / sumUz2);*/
 
 	//  Correct velocities and ang velocities
 	for(int i = 0; i < N; i++) {
@@ -441,9 +444,9 @@ void init	(double* x, double* y, double* z,
 		vy[i] = vy[i] * sfvy;
 		vz[i] = vz[i] * sfvz;
 
-		ux[i] = ux[i] * sfux;
+	/*	ux[i] = ux[i] * sfux;
 		uy[i] = uy[i] * sfuy;
-		uz[i] = uz[i] * sfuz; 
+		uz[i] = uz[i] * sfuz; */
 
 		//  Set old positions and orientations for verlet algo
 		xOld[i] = x[i] - dt * vx[i];
@@ -451,13 +454,13 @@ void init	(double* x, double* y, double* z,
 		zOld[i] = z[i] - dt * vz[i];
 		/*  I don't think this is going to be unit length but correcting to 
 		 * unit length might change the temperature/energy - TEST*/
-		exOld[i] = ex[i] - dt * ux[i];
+	/*	exOld[i] = ex[i] - dt * ux[i];
 		eyOld[i] = ey[i] - dt * uy[i];
-		ezOld[i] = ez[i] - dt * uz[i]; 
+		ezOld[i] = ez[i] - dt * uz[i]; */
 
 		//  Calculate the kinetic energy
-		KT = KT + 0.5 * M * (vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i]);
-		KR = KR + 0.5 * I * (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i]);
+		KT = 0.5 * M * (vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i]);
+		KR = 0.5 * I * (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i]);
 		K = KT + KR;
 	}
 }
@@ -500,7 +503,7 @@ void verlet	(double* x, double* y, double* z,
 		vyi = (y[i] - yOld[i]) / dt;
 		vzi = (z[i] - zOld[i]) / dt; 
 
-		//  New Orientations
+	/*	//  New Orientations
 		exNew = 2*ex[i] - exOld[i] + gx[i]*dt*dt/I;
 		eyNew = 2*ey[i] - eyOld[i] + gy[i]*dt*dt/I;
 		ezNew = 2*ez[i] - ezOld[i] + gz[i]*dt*dt/I;
@@ -522,7 +525,7 @@ void verlet	(double* x, double* y, double* z,
 		//  Ang. velocities at the current timestep
 		uxi = (ex[i] - exOld[i]) / dt;
 		uyi = (ey[i] - eyOld[i]) / dt;
-		uzi = (ez[i] - ezOld[i]) / dt; 
+		uzi = (ez[i] - ezOld[i]) / dt; */
 
 		//  Update Kinetic Energy
 		KT = KT + 0.5 * M * (vxi*vxi + vyi*vyi + vzi*vzi);
