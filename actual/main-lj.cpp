@@ -37,15 +37,15 @@ using namespace std;
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 256,			//  Number of particles
+int 	N				= 500,			//  Number of particles
 		pcf_bins		= 200,			//  Number of bins for pcf
 		pcf_num_steps	= 50;			// 	Steps to avg pcf over
 
 double 	num_steps 		= 1000, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
-	   	temp_init 		= 1.5,			//  Initial temperature
+	   	temp_init 		= 1.0,			//  Initial temperature
 
-	   	L				= 10.0,			//  Length of simulation box
+	   	L				= 8.5,			//  Length of simulation box
 
 	   	M				= 1.0,			//	Particle mass
 	  	I				= 1.0,			//  Particle moment of inertia
@@ -459,8 +459,8 @@ void init	(double* x, double* y, double* z,
 		ezOld[i] = ez[i] - dt * uz[i]; */
 
 		//  Calculate the kinetic energy
-		KT = 0.5 * M * (vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i]);
-		KR = 0.5 * I * (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i]);
+		KT = KT + 0.5 * M * (vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i]);
+		KR = KR + 0.5 * I * (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i]);
 		K = KT + KR;
 	}
 }

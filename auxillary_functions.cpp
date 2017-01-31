@@ -120,6 +120,29 @@ void write_energies(int time){
 	o.close();
 }
 
+//  Writes the scalar order parameter to a file
+void write_sop(double* ex, double* ey, double* ez, int time){
+	double sopx, sopy, sopz; //order param wrt axes
+	double exi, eyi, ezi, mag;
+
+	for(int i = 0; i < N; i++) {
+
+		//wrt x
+		sopx = sopx + (3.0*ex[i]*ex[i] - 1)/2.0;
+		sopy = sopy + (3.0*ey[i]*ey[i] - 1)/2.0;
+		sopz = sopz + (3.0*ez[i]*ez[i] - 1)/2.0;
+	}
+
+	sopx = sopx / N; sopy = sopy /N; sopz = sopz / N;
+
+	ofstream o;
+	o.open("sop.dat", ios::app);
+
+	o << time << " " << sopx << " " << sopy << " " << sopz << endl;
+
+	o.close();
+}
+
 /*  Writes data for pair correlation function to a file
  *  if(avg == 0) store data
  *  if(avg == 1) average data and print 									  */
@@ -166,6 +189,30 @@ void write_pcf(double* x, double* y, double* z,
 	}
 }
 
+//  Write one point to a file
+void write_point(double x, double y, double z,
+				 double ex, double ey, double ez){
+	ofstream o;
+	o.open("points.dat", ios::app);
+
+	o << x << "    " << y << "     " << z << "     " 
+	  << ex << "    " << ey << "    " << ez << "     " << endl;
+
+	o.close();
+}
+
+//  Writes the temperature to a file
+void write_temp(double time){
+	ofstream o; 
+	o.open("temp.dat", ios::app);
+
+	calc_temp();
+
+	o << time << "     " << T << endl;
+
+	o.close();
+}
+
 //  Write the positions and orientations to a file for display puposes
 void write_vectors(double* x, double* y, double* z,
 				   double* ex, double* ey, double* ez){
@@ -173,7 +220,7 @@ void write_vectors(double* x, double* y, double* z,
 	o.open("vector.dat", ios::app);
 
 	for(int i = 0; i < N; i++){
-		o << x[i] << "\t" << y[i] << "\t" << z[i] << "\t"
+		o << x[i] << "\t" << y[i] << "\t" << z[i] << "       "
 		  << ex[i] << "\t" << ey[i] << "\t" << ez[i] << endl;
 	}
 
@@ -182,3 +229,25 @@ void write_vectors(double* x, double* y, double* z,
 
 	o.close();
 }
+
+//  same as write, but extra integer to mark color
+void write_vectors_colored(double* x, double* y, double* z,
+				   double* ex, double* ey, double* ez,
+				   double* color){
+	ofstream o;
+	o.open("vector.dat", ios::app);
+
+	for(int i = 0; i < N; i++){
+		o << x[i] << "\t" << y[i] << "\t" << z[i] << "\t"
+		  << ex[i] << "\t" << ey[i] << "\t" << ez[i] << "\t" 
+		  << (int) color[i] << endl;
+	}
+
+	//  Need extra lines for gnuplot to recognize blocks	
+	o << endl << endl << endl;
+
+	o.close();
+}
+
+
+
