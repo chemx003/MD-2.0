@@ -44,15 +44,16 @@ using namespace std;
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 500,			//  Number of particles
+int 	N				= 1000,			//  Number of particles
 		pcf_bins		= 200,			//  Number of bins for pcf
 		pcf_num_steps	= 20;			// 	Steps to avg pcf over
 
-double 	num_steps 		= 25000, 		//  Number of timesteps
-	   	dt 				= 0.00015, 		//  Length of time step
+double 	num_steps 		= 5000, 			//  Number of timesteps
+	   	dt 				= 0.001, 		//  Length of time step
 	   	temp_init 		= 1.0,			//  Initial temperature
 
-	   	L				= 23,	//  Length of simulation box
+	   	L				= 35,			//  Length of simulation box
+	   	SL				= 13.5,			//	Short length of the simulation box
 
 	   	M				= 1.0,			//	Particle mass
 	  	I				= 1.0,			//  Particle moment of inertia
@@ -121,17 +122,17 @@ int main(){
 			calc_temp(); print_temp();
 		}
 
-		if(i < 20000) {
+		/*if(i < 20000) {
 			L = L - 0.0005;
 			if(i%100 == 0 && i>10000) {
 				rescale(x,y,z,xOld,yOld,zOld,ex,ey,ez,exOld,eyOld,ezOld);
 			}
-		}
+		}*/
 
 		write_sop(ex, ey, ez, i);
 		write_temp(i);
 
-		if(i%50 == 0) {write_vectors(x, y, z, ex, ey, ez);}
+		if(i%10 == 0) {write_vectors(x, y, z, ex, ey, ez);}
 	}
 
 	calc_E(); print_energies();
@@ -187,7 +188,7 @@ void gb		(double* x, double* y, double* z,
 	chi = (kappa*kappa - 1.0) / (kappa*kappa + 1.0);
 	xhi = (pow(xappa, 1.0/mu) - 1.0) / (pow(xappa, 1.0/mu) + 1.0);
 
-	rc = 5.0;
+	rc = 7.0;
 
 	//  Example chooses eps0 and sigma_s equal 1 by units...
 	/*-----------------------------------------------------------*/
@@ -215,12 +216,12 @@ void gb		(double* x, double* y, double* z,
 				dx = dx - L*(dx / abs(dx));
 			}
 
-			if(abs(dy) > 0.5*L){
-				dy = dy - L*(dy / abs(dy));
+			if(abs(dy) > 0.5*SL){
+				dy = dy - SL*(dy / abs(dy));
 			}
 			
-			if(abs(dz) > 0.5*L){
-				dz = dz - L*(dz / abs(dz));
+			if(abs(dz) > 0.5*SL){
+				dz = dz - SL*(dz / abs(dz));
 			}
 
 			//  magnitude of rj
@@ -352,11 +353,11 @@ void gb		(double* x, double* y, double* z,
 				dpot_dsij = cutterm*deps_dsij - epsilon*dcutterm*dsig_dsij;
 
 				//  Forces at cuttoff
-				fxi = fxi + dpot_dsi*(ex[i] - si*hx)/rij
+				fxi = fxi + dpot_drij*hx + dpot_dsi*(ex[i] - si*hx)/rij
 					  + dpot_dsj*(ex[j] - sj*hx)/rij;
-				fyi = fyi + dpot_dsi*(ey[i] - si*hy)/rij
+				fyi = fyi + dpot_drij*hy + dpot_dsi*(ey[i] - si*hy)/rij
 					  + dpot_dsj*(ey[j] - sj*hy)/rij;
-				fzi = fzi + dpot_dsi*(ez[i] - si*hz)/rij
+				fzi = fzi + dpot_drij*hz + dpot_dsi*(ez[i] - si*hz)/rij
 					  + dpot_dsj*(ez[j] - sj*hz)/rij;
 
 				//  Torques at cuttoff
@@ -470,8 +471,8 @@ void init	(double* x, double* y, double* z,
 				if(p<N){
 					//  Assign lattice sites to particle
 					x[p] = (i + 0.5) * a;
-					y[p] = (j +	0.5) * a;
-					z[p] = (k + 0.5) * a;
+					y[p] = (j +	0.5) * SL/10;
+					z[p] = (k + 0.5) * SL/10;
 
 					//  Assign random orientations
 					ex[p] = 1; //dRand(-1.0, 1.0);
@@ -669,21 +670,21 @@ void verlet	(double* x, double* y, double* z,
 		}
 
 		if(y[i] < 0.0){
-			y[i] = y[i] + L;
-			yOld[i] = yOld[i] +L;
+			y[i] = y[i] + SL;
+			yOld[i] = yOld[i] + SL;
 		}
-		else if(y[i] > L){
-			y[i] = y[i] - L;
-			yOld[i] = yOld[i] - L;
+		else if(y[i] > SL){
+			y[i] = y[i] - SL;
+			yOld[i] = yOld[i] - SL;
 		}
 
 		if(z[i] < 0.0){
-			z[i] = z[i] + L;
-			zOld[i] = zOld[i] + L;
+			z[i] = z[i] + SL;
+			zOld[i] = zOld[i] + SL;
 		}
-		else if(z[i] > L){
-			z[i] = z[i] - L;
-			zOld[i] = zOld[i] - L;
+		else if(z[i] > SL){
+			z[i] = z[i] - SL;
+			zOld[i] = zOld[i] - SL;
 		}
 	}
 }
