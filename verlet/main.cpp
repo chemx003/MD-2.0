@@ -4,9 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "auxillary_functions.h"
-#include <sys/types.h>
-#include <unistd.h>
-#include <signal.h>
+
 using namespace std;
 
 /*-----------------------  Function Declarations  ----------------------------*/
@@ -18,9 +16,9 @@ using namespace std;
 
 //  Initialize the simulation
 	void init	(double* x, double* y, double* z,
-			  	double* vx, double* vy, double* vz,
+			  	double* xOld, double* yOld, double* zOld,
 			  	double* ex, double* ey, double* ez,
-			  	double* ux, double* uy, double* uz);
+			  	double* exOld, double* eyOld, double* ezOld);
 
 //  Calculate pair correlation function
 	void pc		(double* x, double* y, double* z);
@@ -28,22 +26,18 @@ using namespace std;
 
 
 //  Numerically integrate Newton's Equations
-	void iterate (double* x, double* y, double* z,
-			  	double* vx, double* vy, double* vz,
+	void verlet (double* x, double* y, double* z,
+			  	double* xOld, double* yOld, double* zOld,
 			  	double* ex, double* ey, double* ez,
-			  	double* ux, double* uy, double* uz,
+			  	double* exOld, double* eyOld, double* ezOld,
 			  	double* fx, double* fy, double* fz,
 			  	double* gx, double* gy, double* gz);
 
-//  Newton Raphson
-	double newton_raphson(double ex, double ey, double ez,
-							double ux, double uy, double uz, int i);
-
 //  rescale velocities
 	void rescale(double* x, double* y, double* z,
-			  	double* vx, double* vy, double* vz,
+			  	double* xOld, double* yOld, double* zOld,
 			  	double* ex, double* ey, double* ez,
-			  	double* ux, double* uy, double* uz);
+			  	double* exOld, double* eyOld, double* ezOld);
 
 /*----------------------------------------------------------------------------*/
 
@@ -54,7 +48,7 @@ int 	N				= 1000,			//  Number of particles
 		pcf_bins		= 200,			//  Number of bins for pcf
 		pcf_num_steps	= 20;			// 	Steps to avg pcf over
 
-double 	num_steps 		= 5000, 		//  Number of timesteps
+double 	num_steps 		= 5000, 			//  Number of timesteps
 	   	dt 				= 0.001, 		//  Length of time step
 	   	temp_init 		= 1.0,			//  Initial temperature
 
@@ -82,10 +76,10 @@ int main(){
 	
 	//  Local variables
 	double 	x[N], y[N], z[N], 				//  Particle coords at n
-			vx[N], vy[N], vz[N],		//	Particle coords at n-1
+			xOld[N], yOld[N], zOld[N],		//	Particle coords at n-1
 
 			ex[N], ey[N], ez[N],			//  Particle orient at n
-			ux[N], uy[N], uz[N],	//  Particle orient at n-1
+			exOld[N], eyOld[N], ezOld[N],	//  Particle orient at n-1
 
 			fx[N], fy[N], fz[N],			//  Forces
 			gx[N], gy[N], gz[N],			//  Gorques
@@ -96,10 +90,8 @@ int main(){
 
 	print_global_variables();
 
-	init(x, y, z, vx, vy, vz,ex, ey, ez, ux, uy, uz);	//  Initialize
-
-	//  Calculate the forces and torques
-	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz);
+	init(x, y, z, xOld, yOld, zOld,
+		 ex, ey, ez, exOld, eyOld, ezOld);			//  Initialize
 
 	write_vectors(x, y, z, ex, ey, ez);
 
@@ -107,9 +99,13 @@ int main(){
 	calc_temp(); print_temp();
 
 	for(int i = 0; i < num_steps; i++) {
+		gb(x, y, z,
+		   ex, ey, ez,
+		   fx, fy, fz,
+		   gx, gy, gz); 		//  Calculate the forces and torques
 
-		iterate(x, y, z, vx, vy, vz,
-			   ex, ey, ez, ux, uy, uz,
+		verlet(x, y, z, xOld, yOld, zOld,
+			   ex, ey, ez, exOld, eyOld, ezOld,
 			   fx, fy, fz,
 			   gx, gy, gz); 	//  Integrate the eqns of motion		
 
@@ -317,7 +313,7 @@ void gb		(double* x, double* y, double* z,
 				gy2 = dpot_dsj*hy + dpot_dsij*ey[i];
 				gz2 = dpot_dsj*hz + dpot_dsij*ez[i]; 
 
-				if(isnan(gx1)!=0 && i== 302){
+				/*if(j == 255 && fxi < -10){
 					cout << "BEFORE CUTOFF" << endl;
 					cout << "fxi = " << fxi << endl;
 					cout << "rij = " << rij << endl;
@@ -326,14 +322,10 @@ void gb		(double* x, double* y, double* z,
 					cout << "rho6 = " << rho6 << endl;
 					cout << "rho12 = " << rho12 << endl;
 					cout << "sigma = " << sigma << endl;
-					cout << "sigma root term = " << 
-						1.0 - 0.5*chi*(sp*spchi + sm*smchi) << endl;
 					cout << "si = " << si << endl;
 					cout << "sj = " << sj << endl;
 					cout << "sp = " << sp << endl;
 					cout << "sm = " << sm << endl;
-					cout << "spchi, smshi = " << spchi << ", " << smchi 
-						<< endl;
 					cout << "(xi, yi, zi) = (" << x[i] << ", " << y[i] 
 						<< ", " << z[i] << ")" << endl;
 					cout << "(xj, yj, zj) = (" << x[j] << ", " << y[j] 
@@ -344,24 +336,15 @@ void gb		(double* x, double* y, double* z,
 						<< ey[i] << ", " << ez[i] << ")" << endl;
 					cout << "(exj, eyj, ezj) = (" << ex[j] << ", "
 						<< ey[j] << ", " << ez[j] << ")" << endl;
-
-					double eimag = sqrt(ex[i]*ex[i] + ey[i]*ey[i] + ez[i]*ez[i]);
-					double ejmag = sqrt(ex[j]*ex[j] + ey[j]*ey[j] + ez[j]*ez[j]);
-
-					cout << "eimag = " << eimag << endl;
-					cout << "ejmag = " << ejmag << endl;
-					cout << "(gxi, gyi, gzi) = (" << gx[i] << "," 
-						<< gy[i] << "," << gz[i] << ")" << endl;
 					cout << "spchi = " << spchi << endl; 
 					cout << "smchi = " << smchi << endl;
 					cout << "chi = " << chi <<endl;
 					cout << "dpot_drij = " << dpot_drij << endl;
 					cout << "dpot_dsi = " << dpot_dsi << endl;
 					cout << "dpot_dsj = " << dpot_dsj << endl;
-					cout << "dpot_dsij = " << dpot_dsij << endl;
 					cout << "i = " << i << endl;
 					cout << "j = " << j << endl << endl;
-				}
+				}*/
 
 				//  Derivatives of the potential at the cuttoff
 				dpot_drij = epsilon * dcutterm;
@@ -446,9 +429,9 @@ void gb		(double* x, double* y, double* z,
 /*  Initialize particle positions, orientations, velocities, and angular 
  *  velocities 																  */
 void init	(double* x, double* y, double* z,
-			 double* vx, double* vy, double* vz,
+			 double* xOld, double* yOld, double* zOld,
 			 double* ex, double* ey, double* ez,
-			 double* ux, double* uy, double* uz){
+			 double* exOld, double* eyOld, double* ezOld){
 
 	double 	sumVx, sumVy, sumVz,			//  Set lin mtm = 0
 
@@ -457,6 +440,9 @@ void init	(double* x, double* y, double* z,
 
 			sfvx, sfvy, sfvz,				//  Scaling factor
 			sfux, sfuy, sfuz,
+
+			vx[N], vy[N], vz[N],			//  velocities
+			ux[N], uy[N], uz[N],
 
 			a,								//  Particle spacing
 
@@ -560,6 +546,16 @@ void init	(double* x, double* y, double* z,
 		uy[i] = uy[i] * sfuy;
 		uz[i] = uz[i] * sfuz; 
 
+		//  Set old positions and orientations for verlet algo
+		xOld[i] = x[i] - dt * vx[i];
+		yOld[i] = y[i] - dt * vy[i];
+		zOld[i] = z[i] - dt * vz[i];
+		/*  I don't think this is going to be unit length but correcting to 
+		 * unit length might change the temperature/energy - TEST*/
+		exOld[i] = ex[i] - dt * ux[i];
+		eyOld[i] = ey[i] - dt * uy[i];
+		ezOld[i] = ez[i] - dt * uz[i]; 
+
 		//  Calculate the kinetic energy
 		KT = KT + 0.5 * M * (vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i]);
 		KR = KR + 0.5 * I * (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i]);
@@ -571,10 +567,10 @@ void init	(double* x, double* y, double* z,
 
 /*  Calculate the new positions and orientations. Update the kinetic energy.
  *  Applies periodic boundary conditions.*/
-void iterate	(double* x, double* y, double* z,
-			  	double* vx, double* vy, double* vz,
+void verlet	(double* x, double* y, double* z,
+			  	double* xOld, double* yOld, double* zOld,
 			  	double* ex, double* ey, double* ez,
-			  	double* ux, double* uy, double* uz,
+			  	double* exOld, double* eyOld, double* ezOld,
 			  	double* fx, double* fy, double* fz,
 			  	double* gx, double* gy, double* gz){
 
@@ -584,9 +580,9 @@ void iterate	(double* x, double* y, double* z,
 			vxi, vyi, vzi,				//  Velocities at current timestep
 			uxi, uyi, uzi,				//  Ang. velocities at current timestep
 
-			d1, d2, b, lm;					//  Dot products and the lagrange mult.
+			d1, d2, lm;					//  Dot products and the lagrange mult.
 
-	double  color[N];
+	double 	vx[N], vy[N], vz[N], color[N];
 
 	//  Reset velocities and kinetic energies
 	vxi = vyi = vzi = 0.0;
@@ -595,73 +591,68 @@ void iterate	(double* x, double* y, double* z,
 
 	//  Calculations
 	for(int i = 0; i < N; i++) {
-		vx[i] = vx[i] + 0.5*fx[i]*dt/M;
-		vy[i] = vy[i] + 0.5*fy[i]*dt/M;
-		vz[i] = vz[i] + 0.5*fz[i]*dt/M;
+		//  New postions
+		xNew = 2*x[i] - xOld[i] + fx[i]*dt*dt/M;
+		yNew = 2*y[i] - yOld[i] + fy[i]*dt*dt/M;
+		zNew = 2*z[i] - zOld[i] + fz[i]*dt*dt/M;
 
-		ux[i] = ux[i] + 0.5*gx[i]*dt/I;
-		uy[i] = uy[i] + 0.5*gy[i]*dt/I;
-		uz[i] = uz[i] + 0.5*gz[i]*dt/I;
+		color[i] = 0.0;
 
-		d1 = ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i];
-		d2 = ex[i]*ux[i] + ey[i]*uy[i] + ez[i]*uz[i];
-		b = d2 + 1/dt;
-
-		double lm1 = -b + sqrt(b*b - d1 - 2*d2/dt);
-		double lm2 = -b - sqrt(b*b - d1 - 2*d2/dt);
-		lm = lm1;
-		if(abs(lm2) < abs(lm1)){ lm = lm2; }
-
-		//cout << "lm = " << lm << endl;
-
-		double mag = ex[i]*ex[i] + ey[i]*ey[i] + ez[i]*ez[i];
-		if(abs(1-mag) > 0.1){
-			cout << "i = " << i << ",mag = " << mag << endl;
+		if(abs(fx[i])>10 || abs(fy[i])>10 || abs(fz[i])>10){
+			color[i] = 1.0;
+		/*	write_point(x[i], y[i], z[i], ex[i], ey[i], ez[i]);
+			cout << "i = " << i << endl;
+			cout << fx[i] << "   " << fy[i] << "    " << fz[i] << endl;*/
 		}
+		else{
+			color[i] = 0.0;
+		} 
 
-		if(isnan(lm)!=0){
-			cout << "LM IS NAN for i = " << i << endl;
-			double mag = ex[i]*ex[i] + ey[i]*ey[i] + ez[i]*ez[i];
-			cout << "mag = " << mag << endl;
-			cout << "b = " << b << endl;
-			cout << "d2 = " << d2 << endl;
-			cout << "(ux,uy,uz) = (" << ux[i]  << "," << uy[i]
-				<< "," << uz[i] << ")" << endl;
-			cout << "(gx,gy,gz) = (" << gx[i] << "," << gy[i]
-				<< "," << gz[i] << ")";
-			cout << endl << endl;
-			kill(getpid(), SIGKILL);
-		}
+		//  Store old positions and update current positions
+		xOld[i] = x[i]; yOld[i] = y[i]; zOld[i] = z[i];
+		x[i] = xNew; y[i] = yNew; z[i] = zNew;
 
-		x[i] = x[i] + vx[i]*dt;
-		y[i] = y[i] + vy[i]*dt;
-		z[i] = z[i] + vz[i]*dt;
- 
-		ex[i] = ex[i] + (ux[i] + lm*ex[i])*dt;
-		ey[i] = ey[i] + (uy[i] + lm*ey[i])*dt;
-		ez[i] = ez[i] + (uz[i] + lm*ez[i])*dt;
+		//  Velocities at the current timestep
+		vxi = (x[i] - xOld[i]) / dt;
+		vyi = (y[i] - yOld[i]) / dt;
+		vzi = (z[i] - zOld[i]) / dt;
+
+		vx[i] = vxi;
+		vy[i] = vyi;
+		vz[i] = vzi;
+
+		/*cout << "i = " << i << endl;
+		cout << "vxi = " << vxi << endl;
+		cout << "fxi = " << fx[i] << endl << endl;*/
 
 
-		//if(mag != 1.0){ cout << mag << endl; }
-	}
+		//  New Orientations
+		exNew = 2*ex[i] - exOld[i] + gx[i]*dt*dt/I;
+		eyNew = 2*ey[i] - eyOld[i] + gy[i]*dt*dt/I;
+		ezNew = 2*ez[i] - ezOld[i] + gz[i]*dt*dt/I;
 
-	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz);
+		//  Calculate the lagrange multiplier
+		d1 = ex[i]*exNew + ey[i]*eyNew + ez[i]*ezNew;
+		d2 = exNew*exNew + eyNew*eyNew + ezNew*ezNew;
+		lm = -d1 + sqrt(d1*d1 - d2 + 1.0);
 
-	for(int i = 0; i < N; i++) {
-		vx[i] = vx[i] + 0.5*fx[i]*dt/M;
-		vy[i] = vy[i] + 0.5*fy[i]*dt/M;
-		vz[i] = vz[i] + 0.5*fz[i]*dt/M;
+		//  Adjust new orientations
+		exNew = exNew + ex[i]*lm; 
+		eyNew = eyNew + ey[i]*lm;
+		ezNew = ezNew + ez[i]*lm;
 
-		d1 = ux[i]*ex[i] + uy[i]*ey[i] + uz[i]*ez[i];
-		lm = 2*d1/dt + gx[i]*ex[i] + gy[i]*ey[i] + gz[i]*ez[i];
+		//  Store old orientations and update current orientations
+		exOld[i] = ex[i]; eyOld[i] = ey[i]; ezOld[i] = ez[i];
+		ex[i] = exNew; ey[i] = eyNew; ez[i] = ezNew;
 
-		ux[i] = ux[i] + 0.5*(gx[i])*dt/I-0.5*lm*ex[i]*dt/I;
-		uy[i] = uy[i] + 0.5*(gy[i])*dt/I-0.5*lm*ey[i]*dt/I;
-		uz[i] = uz[i] + 0.5*(gz[i])*dt/I-0.5*lm*ez[i]*dt/I;
+		//  Ang. velocities at the current timestep
+		uxi = (ex[i] - exOld[i]) / dt;
+		uyi = (ey[i] - eyOld[i]) / dt;
+		uzi = (ez[i] - ezOld[i]) / dt; 
 
-		//  Calculate the kinetic energy
-		KT = KT + 0.5 * M * (vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i]);
-		KR = KR + 0.5 * I * (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i]);
+		//  Update Kinetic Energy
+		KT = KT + 0.5 * M * (vxi*vxi + vyi*vyi + vzi*vzi);
+		KR = KR + 0.5 * I * (uxi*uxi + uyi*uyi + uzi*uzi);
 		K = KT + KR;
 	}
 
@@ -671,75 +662,63 @@ void iterate	(double* x, double* y, double* z,
 	for(int i = 0; i < N; i++) {
 		if(x[i] < 0.0){
 			x[i] = x[i] + L;
+			xOld[i] = xOld[i] + L;
 		}
 		else if(x[i] > L){
 			x[i] = x[i] - L;
+			xOld[i] = xOld[i] - L;
 		}
 
 		if(y[i] < 0.0){
 			y[i] = y[i] + SL;
+			yOld[i] = yOld[i] + SL;
 		}
 		else if(y[i] > SL){
 			y[i] = y[i] - SL;
+			yOld[i] = yOld[i] - SL;
 		}
 
 		if(z[i] < 0.0){
 			z[i] = z[i] + SL;
+			zOld[i] = zOld[i] + SL;
 		}
 		else if(z[i] > SL){
 			z[i] = z[i] - SL;
+			zOld[i] = zOld[i] - SL;
 		}
 	}
-}
-
-//  Newton raphson method for calculating the lagrange multiplier
-double newton_raphson(double ex, double ey, double ez,
-					  double ux, double uy, double uz, int i){
-	double l, lOld, temp;
-	double dot1, dot2;
-	int count=0;
-
-	lOld = ux*ux + uy*uy + uz*uz;
-
-	dot1 = ex*ux + ey*uy + ez*uz;
-	dot2 = ux*ux + uy*uy + uz*uz;
-	
-
-	if(isnan(ux)==0 && isnan(uy)==0 && isnan(uz)==0){
-		while(abs(l - lOld) > 0.01 && isnan(l)==0){
-			temp = l;
-			l = lOld - (lOld*lOld + 2*lOld*(dot1+1/dt) + dot2  + 2*dot1/dt)/
-				(2*lOld + 2*dot1 + 1/dt);
-			count++;
-			lOld = temp; 
-			if(count > 1000){
-				cout << count << endl;
-				cout << "i = " << i <<",l = " <<  l << endl << endl;
-			} 
-		}
-	}
-
-	return l;
 }
 
 //  Rescale the velocities to temp_init .... move this to auxilary functions 
 
 void rescale(double* x, double* y, double* z,
-			 double* vx, double* vy, double* vz,
+			 double* xOld, double* yOld, double* zOld,
 			 double* ex, double* ey, double* ez,
-			 double* ux, double* uy, double* uz){
+			 double* exOld, double* eyOld, double* ezOld){
 
 	double 	sumVx2, sumVy2, sumVz2, 		//  Set kinetic energy
 			sumUx2, sumUy2, sumUz2,
 
 			sfvx, sfvy, sfvz,				//  Scaling factor
-			sfux, sfuy, sfuz;
+			sfux, sfuy, sfuz,
+
+			vx[N], vy[N], vz[N],			//  velocities
+			ux[N], uy[N], uz[N];
 	
 	//  Set this equal to zero
 	sumVx2 = sumVy2 = sumVz2 = 0.0;
 	sumUx2 = sumUy2 = sumUz2 = 0.0;
 
 	for(int p = 0; p < N; p++) {
+		//  Assign random velocities and ang velocites
+		vx[p] = (x[p] - xOld[p])/dt;
+		vy[p] = (y[p] - yOld[p])/dt;
+		vz[p] = (z[p] - zOld[p])/dt;
+
+		ux[p] = (ex[p] - exOld[p])/dt;
+		uy[p] = (ey[p] - eyOld[p])/dt;
+		uz[p] = (ez[p] - ezOld[p])/dt; 
+
 		//  Sum for corrections to energy and mtm
 		sumVx2 = sumVx2 + vx[p] * vx[p];
 		sumVy2 = sumVy2 + vy[p] * vy[p];
@@ -773,6 +752,16 @@ void rescale(double* x, double* y, double* z,
 		ux[i] = ux[i] * sfux;
 		uy[i] = uy[i] * sfuy;
 		uz[i] = uz[i] * sfuz; 
+
+		//  Set old positions and orientations for verlet algo
+		xOld[i] = x[i] - dt * vx[i];
+		yOld[i] = y[i] - dt * vy[i];
+		zOld[i] = z[i] - dt * vz[i];
+		/*  I don't think this is going to be unit length but correcting to 
+		 * unit length might change the temperature/energy - TEST*/
+		exOld[i] = ex[i] - dt * ux[i];
+		eyOld[i] = ey[i] - dt * uy[i];
+		ezOld[i] = ez[i] - dt * uz[i]; 
 
 		//  Calculate the kinetic energy
 		KT = KT + 0.5 * M * (vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i]);
