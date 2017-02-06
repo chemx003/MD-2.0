@@ -82,14 +82,14 @@ int main(){
 	
 	//  Local variables
 	double 	x[N], y[N], z[N], 				//  Particle coords at n
-			vx[N], vy[N], vz[N],		//	Particle coords at n-1
+			vx[N], vy[N], vz[N],			//	Particle coords at n-1
 
 			ex[N], ey[N], ez[N],			//  Particle orient at n
-			ux[N], uy[N], uz[N],	//  Particle orient at n-1
+			ux[N], uy[N], uz[N],			//  Particle orient at n-1
 
 			fx[N], fy[N], fz[N],			//  Forces
 			gx[N], gy[N], gz[N],			//  Gorques
-			histo[pcf_bins][2];					//  Histogram for pcf
+			histo[pcf_bins][2];				//  Histogram for pcf
 
 	//  Iteration
 	srand(1);
@@ -251,10 +251,10 @@ void gb		(double* x, double* y, double* z,
 				smxhi = sm / (1.0 - xhi*sij);
 
 				//  Distance parameter (sigma)
-				sigma = 1.0/ sqrt(1.0 - 0.5*chi*(sp*spchi + sm*smchi));
+				sigma = 1.0 / sqrt(1.0 - 0.5*chi*(sp*spchi + sm*smchi));
 
 				//  Well depth (epsilon) !!Watch the notation!!
-				eps1 = 1.0/ sqrt(1.0 - (chi*chi*sij*sij));
+				eps1 = 1.0 / sqrt(1.0 - (chi*chi*sij*sij));
 				eps2 = 1.0 - 0.5*xhi*(sp*spxhi + sm*smxhi);
 				epsilon = pow(eps1, nu) * pow(eps2, mu);
 
@@ -291,7 +291,7 @@ void gb		(double* x, double* y, double* z,
 							+ nu*chi*chi*pow(eps1, nu+2)*pow(eps2, mu)*sij;
 
 				//  Derivatives of the potential at rij
-				dpot_drij = drhoterm;
+				dpot_drij = epsilon*drhoterm;
 				dpot_dsi = rhoterm*deps_dsi - epsilon*drhoterm*dsig_dsi;
 				dpot_dsj = rhoterm*deps_dsj - epsilon*drhoterm*dsig_dsj;
 				dpot_dsij = rhoterm*deps_dsij - epsilon*drhoterm*dsig_dsij;
@@ -317,7 +317,7 @@ void gb		(double* x, double* y, double* z,
 				gy2 = dpot_dsj*hy + dpot_dsij*ey[i];
 				gz2 = dpot_dsj*hz + dpot_dsij*ez[i]; 
 
-				if(isnan(gx1)!=0 && i== 302){
+			/*	if(isnan(gx1)!=0 && i== 302){
 					cout << "BEFORE CUTOFF" << endl;
 					cout << "fxi = " << fxi << endl;
 					cout << "rij = " << rij << endl;
@@ -361,7 +361,7 @@ void gb		(double* x, double* y, double* z,
 					cout << "dpot_dsij = " << dpot_dsij << endl;
 					cout << "i = " << i << endl;
 					cout << "j = " << j << endl << endl;
-				}
+				}*/
 
 				//  Derivatives of the potential at the cuttoff
 				dpot_drij = epsilon * dcutterm;
