@@ -50,16 +50,16 @@ using namespace std;
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 1000,			//  Number of particles
+int 	N				= 216,			//  Number of particles
 		pcf_bins		= 200,			//  Number of bins for pcf
-		pcf_num_steps	= 20;			// 	Steps to avg pcf over
+		pcf_num_steps	= 200;			// 	Steps to avg pcf over
 
-double 	num_steps 		= 5000, 		//  Number of timesteps
-	   	dt 				= 0.001, 		//  Length of time step
-	   	temp_init 		= 1.0,			//  Initial temperature
+double 	num_steps 		= 20000, 		//  Number of timesteps
+	   	dt 				= 0.0015, 		//  Length of time step
+	   	temp_init 		= 3.0,			//  Initial temperature
 
-	   	L				= 35,			//  Length of simulation box
-	   	SL				= 13.5,			//	Short length of the simulation box
+	   	L				= 18.4,			//  Length of simulation box
+	   	SL				= 6.4,			//	Short length of the simulation box
 
 	   	M				= 1.0,			//	Particle mass
 	  	I				= 1.0,			//  Particle moment of inertia
@@ -192,7 +192,7 @@ void gb		(double* x, double* y, double* z,
 	chi = (kappa*kappa - 1.0) / (kappa*kappa + 1.0);
 	xhi = (pow(xappa, 1.0/mu) - 1.0) / (pow(xappa, 1.0/mu) + 1.0);
 
-	rc = 7.0;
+	rc = 6.0;
 
 	//  Example chooses eps0 and sigma_s equal 1 by units...
 	/*-----------------------------------------------------------*/
@@ -458,7 +458,7 @@ void init	(double* x, double* y, double* z,
 			sfvx, sfvy, sfvz,				//  Scaling factor
 			sfux, sfuy, sfuz,
 
-			a,								//  Particle spacing
+			a,b,								//  Particle spacing
 
 			mag;							//  Magnitude of orientation
 
@@ -476,6 +476,7 @@ void init	(double* x, double* y, double* z,
 	//  Max number of particles along a side of a cube length l with spacing a
 	NUM_LINE = ceil(pow(N, 1.0 / 3.0));
 	a = L / NUM_LINE;
+	b = SL / NUM_LINE;
 
 	cout << "SPACING = " << a << endl << endl;
 
@@ -485,8 +486,8 @@ void init	(double* x, double* y, double* z,
 				if(p<N){
 					//  Assign lattice sites to particle
 					x[p] = (i + 0.5) * a;
-					y[p] = (j +	0.5) * SL/10;
-					z[p] = (k + 0.5) * SL/10;
+					y[p] = (j +	0.5) * b;
+					z[p] = (k + 0.5) * b;
 
 					//  Assign random orientations
 					ex[p] = 1; //dRand(-1.0, 1.0);

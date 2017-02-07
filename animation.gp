@@ -1,8 +1,8 @@
 stats "vector.dat" nooutput
 
-set xrange [-2: 40]
-set yrange [-2: 40]
-set zrange [-2: 40]
+set xrange [-2: 20]
+set yrange [-2: 20]
+set zrange [-2: 20]
 
 set size ratio -1
 
