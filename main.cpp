@@ -55,11 +55,12 @@ int 	N				= 216,			//  Number of particles
 		pcf_num_steps	= 200;			// 	Steps to avg pcf over
 
 double 	num_steps 		= 20000, 		//  Number of timesteps
-	   	dt 				= 0.0015, 		//  Length of time step
-	   	temp_init 		= 3.0,			//  Initial temperature
+	   	dt 				= 0.001, 		//  Length of time step
+	   	temp_init 		= 2.0,			//  Initial temperature
+	   	xi, eta,						//  Thermostat variables
 
-	   	L				= 18.4,			//  Length of simulation box
-	   	SL				= 6.4,			//	Short length of the simulation box
+	   	L				= 18.0,			//  Length of simulation box
+	   	SL				= 6.0,			//	Short length of the simulation box
 
 	   	M				= 1.0,			//	Particle mass
 	  	I				= 1.0,			//  Particle moment of inertia
@@ -186,7 +187,7 @@ void gb		(double* x, double* y, double* z,
 			fxi, fyi, fzi, gx1, gy1, gz1, gx2, gy2, gz2;
 
 	/*----------------------Set Parameters-----------------------*/
-	mu = 1.0; nu = 2.0;
+	mu = 2.0; nu = 1.0;
 	kappa = 3.0; xappa = 5.0; //  xappa is a touch suspicious
 
 	chi = (kappa*kappa - 1.0) / (kappa*kappa + 1.0);
@@ -232,7 +233,7 @@ void gb		(double* x, double* y, double* z,
 			rij2 = dx*dx + dy*dy + dz*dz;
 			rij = sqrt(rij2);
 
-			//  if(rij <= 1.0){cout << "rij = " << rij << endl;}
+			//  if(rij <= 0.95){cout << "rij = " << rij << endl;}
 
 			//  Calculate the unit vector of rij
 			hx = dx / rij;
