@@ -54,13 +54,13 @@ int 	N				= 216,			//  Number of particles
 		pcf_bins		= 200,			//  Number of bins for pcf
 		pcf_num_steps	= 200;			// 	Steps to avg pcf over
 
-double 	num_steps 		= 20000, 		//  Number of timesteps
-	   	dt 				= 0.001, 		//  Length of time step
-	   	temp_init 		= 2.0,			//  Initial temperature
-	   	xi, eta,						//  Thermostat variables
+double 	num_steps 		= 100000, 		//  Number of timesteps
+	   	dt 				= 0.0015, 		//  Length of time step
+	   	temp_init 		= 0.9,			//  Initial temperature
+	   	xi = 0, eta = 0,				//  Thermostat variables
 
-	   	L				= 18.0,			//  Length of simulation box
-	   	SL				= 6.0,			//	Short length of the simulation box
+	   	L				= 18.1,			//  Length of simulation box
+	   	SL				= 6.1,			//	Short length of the simulation box
 
 	   	M				= 1.0,			//	Particle mass
 	  	I				= 1.0,			//  Particle moment of inertia
@@ -597,13 +597,13 @@ void iterate	(double* x, double* y, double* z,
 
 	//  Calculations
 	for(int i = 0; i < N; i++) {
-		vx[i] = vx[i] + 0.5*fx[i]*dt/M;
-		vy[i] = vy[i] + 0.5*fy[i]*dt/M;
-		vz[i] = vz[i] + 0.5*fz[i]*dt/M;
+		vx[i] = vx[i]*(1 - xi*dt/2) + 0.5*fx[i]*dt/M;
+		vy[i] = vy[i]*(1 - xi*dt/2) + 0.5*fy[i]*dt/M;
+		vz[i] = vz[i]*(1 - xi*dt/2) + 0.5*fz[i]*dt/M;
 
-		ux[i] = ux[i] + 0.5*gx[i]*dt/I;
-		uy[i] = uy[i] + 0.5*gy[i]*dt/I;
-		uz[i] = uz[i] + 0.5*gz[i]*dt/I;
+		ux[i] = ux[i]*(1 - xi*dt/2) + 0.5*gx[i]*dt/I;
+		uy[i] = uy[i]*(1 - xi*dt/2) + 0.5*gy[i]*dt/I;
+		uz[i] = uz[i]*(1 - xi*dt/2) + 0.5*gz[i]*dt/I;
 
 		d1 = ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i];
 		d2 = ex[i]*ux[i] + ey[i]*uy[i] + ez[i]*uz[i];
@@ -643,23 +643,30 @@ void iterate	(double* x, double* y, double* z,
 		ey[i] = ey[i] + (uy[i] + lm*ey[i])*dt;
 		ez[i] = ez[i] + (uz[i] + lm*ez[i])*dt;
 
-
+		//  Calculate the kinetic energy
+		KT = KT + 0.5 * M * (vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i]);
+		KR = KR + 0.5 * I * (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i]);
+		K = KT + KR;
 		//if(mag != 1.0){ cout << mag << endl; }
 	}
+
+	xi = xi + (2*K - (5*N-3)*temp_init)*dt;
+
+	KT = KR = K = 0;
 
 	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz);
 
 	for(int i = 0; i < N; i++) {
-		vx[i] = vx[i] + 0.5*fx[i]*dt/M;
-		vy[i] = vy[i] + 0.5*fy[i]*dt/M;
-		vz[i] = vz[i] + 0.5*fz[i]*dt/M;
+		vx[i] = (vx[i] + 0.5*fx[i]*dt/M)/(1 + xi*dt/2);
+		vy[i] = (vy[i] + 0.5*fy[i]*dt/M)/(1 + xi*dt/2);
+		vz[i] = (vz[i] + 0.5*fz[i]*dt/M)/(1 + xi*dt/2);
 
 		d1 = ux[i]*ex[i] + uy[i]*ey[i] + uz[i]*ez[i];
 		lm = 2*d1/dt + gx[i]*ex[i] + gy[i]*ey[i] + gz[i]*ez[i];
 
-		ux[i] = ux[i] + 0.5*(gx[i])*dt/I-0.5*lm*ex[i]*dt/I;
-		uy[i] = uy[i] + 0.5*(gy[i])*dt/I-0.5*lm*ey[i]*dt/I;
-		uz[i] = uz[i] + 0.5*(gz[i])*dt/I-0.5*lm*ez[i]*dt/I;
+		ux[i] = (ux[i] + 0.5*(gx[i])*dt/I - 0.5*lm*ex[i]*dt/I)/(1 + xi*dt/2);
+		uy[i] = (uy[i] + 0.5*(gy[i])*dt/I - 0.5*lm*ey[i]*dt/I)/(1 + xi*dt/2);
+		uz[i] = (uz[i] + 0.5*(gz[i])*dt/I - 0.5*lm*ez[i]*dt/I)/(1 + xi*dt/2);
 
 		//  Calculate the kinetic energy
 		KT = KT + 0.5 * M * (vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i]);
