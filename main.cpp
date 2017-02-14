@@ -22,11 +22,6 @@ using namespace std;
 			  	double* ex, double* ey, double* ez,
 			  	double* ux, double* uy, double* uz);
 
-//  Calculate pair correlation function
-	void pc		(double* x, double* y, double* z);
-
-
-
 //  Numerically integrate Newton's Equations
 	void iterate (double* x, double* y, double* z,
 			  	double* vx, double* vy, double* vz,
@@ -35,15 +30,8 @@ using namespace std;
 			  	double* fx, double* fy, double* fz,
 			  	double* gx, double* gy, double* gz);
 
-//  Newton Raphson
-	double newton_raphson(double ex, double ey, double ez,
-							double ux, double uy, double uz, int i);
-
-//  rescale velocities
-	void rescale(double* x, double* y, double* z,
-			  	double* vx, double* vy, double* vz,
-			  	double* ex, double* ey, double* ez,
-			  	double* ux, double* uy, double* uz);
+/*  Have write temp and write sop return the values take a sum to calculate 
+ *  the average */
 
 /*----------------------------------------------------------------------------*/
 
@@ -54,9 +42,9 @@ int 	N				= 216,			//  Number of particles
 		pcf_bins		= 200,			//  Number of bins for pcf
 		pcf_num_steps	= 200;			// 	Steps to avg pcf over
 
-double 	num_steps 		= 100000, 		//  Number of timesteps
+double 	num_steps 		= 35000, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
-	   	temp_init 		= 0.9,			//  Initial temperature
+	   	temp_init 		= 1.0,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
 	   	L				= 18.1,			//  Length of simulation box
@@ -90,9 +78,15 @@ int main(){
 
 			fx[N], fy[N], fz[N],			//  Forces
 			gx[N], gy[N], gz[N],			//  Gorques
-			histo[pcf_bins][2];				//  Histogram for pcf
+			histo[pcf_bins][2],				//  Histogram for pcf
+			histo2[pcf_bins][2],				//  Histogram for ocf
+			avg_temp, avg_sop;				//  Holders for avgs
+
+	int		c_temp, c_sop;					//  Counters for avgs
 
 	//  Iteration
+	avg_temp = 0.0; avg_sop = 0.0; c_temp = 0.0; c_sop = 0.0;
+
 	srand(1);
 
 	print_global_variables();
@@ -118,6 +112,7 @@ int main(){
 
 		if(num_steps-i <= pcf_num_steps){
 			write_pcf(x, y, z, histo, 0);
+			write_ocf(x, y, z, ex, ey, ez, histo2, 0);
 		}
 
 		if(i%100 == 0) {
@@ -128,14 +123,21 @@ int main(){
 		}
 
 		/*if(i < 20000) {
-			L = L - 0.0005;
-			if(i%100 == 0 && i>10000) {
 				rescale(x,y,z,xOld,yOld,zOld,ex,ey,ez,exOld,eyOld,ezOld);
-			}
 		}*/
 
 		write_sop(ex, ey, ez, i);
 		write_temp(i);
+
+		if(i>30000){
+			avg_temp = avg_temp + return_temp();
+			c_temp++;
+
+			if(abs(return_sopx(ex))<3.0){
+				avg_sop = avg_sop + return_sopx(ex);
+				c_sop++;
+			}
+		}
 
 		if(i%10 == 0) {write_vectors(x, y, z, ex, ey, ez);}
 	}
@@ -143,8 +145,15 @@ int main(){
 	calc_E(); print_energies();
 	calc_temp(); print_temp();
 
+	avg_temp = avg_temp/c_temp;
+	avg_sop = avg_sop/c_sop;
+
+	cout << "AVG_TEMP = " << avg_temp << endl;
+	cout << "AVG_SOPX = " << avg_sop << endl << endl;
+
 	//  Analysis & Post-Processing
 	write_pcf(x, y, z, histo, 1);
+	write_ocf(x, y, z, ex, ey, ez, histo2, 1);
 }
 
 //  Gay-Berne: Calulate the forces and torques
@@ -701,92 +710,7 @@ void iterate	(double* x, double* y, double* z,
 	}
 }
 
-//  Newton raphson method for calculating the lagrange multiplier
-double newton_raphson(double ex, double ey, double ez,
-					  double ux, double uy, double uz, int i){
-	double l, lOld, temp;
-	double dot1, dot2;
-	int count=0;
 
-	lOld = ux*ux + uy*uy + uz*uz;
 
-	dot1 = ex*ux + ey*uy + ez*uz;
-	dot2 = ux*ux + uy*uy + uz*uz;
-	
 
-	if(isnan(ux)==0 && isnan(uy)==0 && isnan(uz)==0){
-		while(abs(l - lOld) > 0.01 && isnan(l)==0){
-			temp = l;
-			l = lOld - (lOld*lOld + 2*lOld*(dot1+1/dt) + dot2  + 2*dot1/dt)/
-				(2*lOld + 2*dot1 + 1/dt);
-			count++;
-			lOld = temp; 
-			if(count > 1000){
-				cout << count << endl;
-				cout << "i = " << i <<",l = " <<  l << endl << endl;
-			} 
-		}
-	}
-
-	return l;
-}
-
-//  Rescale the velocities to temp_init .... move this to auxilary functions 
-
-void rescale(double* x, double* y, double* z,
-			 double* vx, double* vy, double* vz,
-			 double* ex, double* ey, double* ez,
-			 double* ux, double* uy, double* uz){
-
-	double 	sumVx2, sumVy2, sumVz2, 		//  Set kinetic energy
-			sumUx2, sumUy2, sumUz2,
-
-			sfvx, sfvy, sfvz,				//  Scaling factor
-			sfux, sfuy, sfuz;
-	
-	//  Set this equal to zero
-	sumVx2 = sumVy2 = sumVz2 = 0.0;
-	sumUx2 = sumUy2 = sumUz2 = 0.0;
-
-	for(int p = 0; p < N; p++) {
-		//  Sum for corrections to energy and mtm
-		sumVx2 = sumVx2 + vx[p] * vx[p];
-		sumVy2 = sumVy2 + vy[p] * vy[p];
-		sumVz2 = sumVz2 + vz[p] * vz[p];
-
-		sumUx2 = sumUx2 + ux[p] * ux[p];
-		sumUy2 = sumUy2 + uy[p] * uy[p];
-		sumUz2 = sumUz2 + uz[p] * uz[p];
-	}
-
-	//  Current mean squared velocities
-	sumVx2 = sumVx2 / N; sumVy2 = sumVy2 / N; sumVz2 = sumVz2 / N;
-	sumUx2 = sumUx2 / N; sumUy2 = sumUy2 / N; sumUz2 = sumUz2 / N; 
-
-	//  Calculate scaling factors
-	sfvx = sqrt(KB * temp_init / sumVx2);
-	sfvy = sqrt(KB * temp_init / sumVy2);
-	sfvz = sqrt(KB * temp_init / sumVz2);
-
-	sfux = sqrt(KB * temp_init / sumUx2);
-	sfuy = sqrt(KB * temp_init / sumUy2);
-	sfuz = sqrt(KB * temp_init / sumUz2);
-
-	//  Correct velocities and ang velocities
-	for(int i = 0; i < N; i++) {
-		//  Scale velocities and ang velocites
-		vx[i] = vx[i] * sfvx;
-		vy[i] = vy[i] * sfvy;
-		vz[i] = vz[i] * sfvz;
-
-		ux[i] = ux[i] * sfux;
-		uy[i] = uy[i] * sfuy;
-		uz[i] = uz[i] * sfuz; 
-
-		//  Calculate the kinetic energy
-		KT = KT + 0.5 * M * (vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i]);
-		KR = KR + 0.5 * I * (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i]);
-		K = KT + KR;
-	}
-}
 

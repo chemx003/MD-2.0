@@ -1,0 +1,58 @@
+\documentclass{article}
+\usepackage{amsmath}
+
+\begin{document}
+	
+	\begin{equation*}
+		F = F_{bulk} = \int (f_{splay} + f_{twist} + f_{bend}) d^3 \vec{r}
+	\end{equation*}
+
+	\begin{equation*}
+	= \int\frac{1}{2}(K_1(\nabla\cdot\vec{n})^2 + K_2(\vec{n}\cdot(\nabla\times\vec{n}))^2+K_3(\vec{n}\times(\nabla\times\vec{n}))^2))d^3\vec{r}
+	\end{equation*}
+
+	\begin{equation*}
+		U_{GB} (\hat{u_i},\hat{u_j},\vec{r_{ij}})= 4\epsilon(\hat{u_i},\hat{u_j},\vec{r_{ij}})(R^{-12}(\hat{u_i},\hat{u_j},\vec{r_{ij}})-R^{-6}(\hat{u_i},\hat{u_j},\vec{r_{ij}}))
+	\end{equation*}
+
+	\begin{equation*}
+		U_{sphere} (\hat{u}, \vec{r}) = 4\epsilon_0R^{-18}(\hat{u}, \vec{r})-W\frac{(\hat{r}\cdot\hat{u})^6}{r^6}
+	\end{equation*}
+	
+	\begin{equation*}
+		Q =\frac{1}{N}\sum_{i}^{N}(u_{\alpha}^{(i)}u_{\beta}^{(i)}-\frac{1}{3}\delta_{\alpha\beta}) = \frac{1}{N}\sum_{i}^{N}
+	\[
+	\begin{bmatrix}
+		u_{xx}^{(i)}-\frac{1}{3} & u_{xy}^{(i)} & u_{xz}^{(i)} \\
+		u_{yx}^{(i)} & u_{yy}^{(i)}-\frac{1}{3} & u_{yz}^{(i)} \\
+		u_{zx}^{(i)} & u_{zy}^{(i)} & u_{zz}^{(i)}-\frac{1}{3} 
+
+	\end{bmatrix}
+	\]
+	\end{equation*}
+
+	\begin{equation*}
+		2\pi s = \oint \frac{d\theta}{ds}ds
+	\end{equation*}
+
+	\begin{equation*}
+		v_i(t+\frac{\Delta t}{2}) = v_i(t) + a_i(t)\frac{\Delta t}{2}
+	\end{equation*}
+
+	\begin{equation*}
+		x_i(t+\Delta t) = x_i(t) + v_i(t+\frac{\Delta t}{2})\Delta t
+	\end{equation*}
+	
+	\begin{equation*}
+		v_i(t+\Delta t) = v_i(t+\frac{\Delta t}{2}) + a_i(t+\frac{\Delta t}{2})\frac{\Delta t}{2}
+	\end{equation*}
+
+	\begin{equation*}
+		e_i(t+\Delta t) = e_i(t) + u_i(t + \frac{\Delta t}{2})\Delta t + \lambda e_i(t) \Delta t
+	\end{equation*}
+
+	\begin{equation*}
+		u_i(t+\Delta t) = u_i(t+\frac{\Delta t}{2}) + \alpha_i(t+\Delta t)\frac{\Delta t}{2} + \tilde{\lambda} e_i(t+\Delta t)\frac{\Delta t}{2}
+	\end{equation*}
+
+\end{document}
