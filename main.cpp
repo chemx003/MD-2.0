@@ -327,52 +327,6 @@ void gb		(double* x, double* y, double* z,
 				gy2 = dpot_dsj*hy + dpot_dsij*ey[i];
 				gz2 = dpot_dsj*hz + dpot_dsij*ez[i]; 
 
-			/*	if(isnan(gx1)!=0 && i== 302){
-					cout << "BEFORE CUTOFF" << endl;
-					cout << "fxi = " << fxi << endl;
-					cout << "rij = " << rij << endl;
-					cout << "rhoterm = " << rhoterm << endl;
-					cout << "rho = " << rho << endl;
-					cout << "rho6 = " << rho6 << endl;
-					cout << "rho12 = " << rho12 << endl;
-					cout << "sigma = " << sigma << endl;
-					cout << "sigma root term = " << 
-						1.0 - 0.5*chi*(sp*spchi + sm*smchi) << endl;
-					cout << "si = " << si << endl;
-					cout << "sj = " << sj << endl;
-					cout << "sp = " << sp << endl;
-					cout << "sm = " << sm << endl;
-					cout << "spchi, smshi = " << spchi << ", " << smchi 
-						<< endl;
-					cout << "(xi, yi, zi) = (" << x[i] << ", " << y[i] 
-						<< ", " << z[i] << ")" << endl;
-					cout << "(xj, yj, zj) = (" << x[j] << ", " << y[j] 
-						<< ", " << z[j] << ")" << endl;
-					cout << "(hx, hy, hz) = (" << hx << ", " << hy << ", " 
-						<< hz << ")" << endl;
-					cout << "(exi, eyi, ezi) = (" << ex[i] << ", " 
-						<< ey[i] << ", " << ez[i] << ")" << endl;
-					cout << "(exj, eyj, ezj) = (" << ex[j] << ", "
-						<< ey[j] << ", " << ez[j] << ")" << endl;
-
-					double eimag = sqrt(ex[i]*ex[i] + ey[i]*ey[i] + ez[i]*ez[i]);
-					double ejmag = sqrt(ex[j]*ex[j] + ey[j]*ey[j] + ez[j]*ez[j]);
-
-					cout << "eimag = " << eimag << endl;
-					cout << "ejmag = " << ejmag << endl;
-					cout << "(gxi, gyi, gzi) = (" << gx[i] << "," 
-						<< gy[i] << "," << gz[i] << ")" << endl;
-					cout << "spchi = " << spchi << endl; 
-					cout << "smchi = " << smchi << endl;
-					cout << "chi = " << chi <<endl;
-					cout << "dpot_drij = " << dpot_drij << endl;
-					cout << "dpot_dsi = " << dpot_dsi << endl;
-					cout << "dpot_dsj = " << dpot_dsj << endl;
-					cout << "dpot_dsij = " << dpot_dsij << endl;
-					cout << "i = " << i << endl;
-					cout << "j = " << j << endl << endl;
-				}*/
-
 				//  Derivatives of the potential at the cuttoff
 				dpot_drij = epsilon * dcutterm;
 				dpot_dsi = cutterm*deps_dsi - epsilon*dcutterm*dsig_dsi;
@@ -395,39 +349,6 @@ void gb		(double* x, double* y, double* z,
 				gx2 = gx2 - dpot_dsj*hx - dpot_dsij*ex[i];
 				gy2 = gy2 - dpot_dsj*hy - dpot_dsij*ey[i];
 				gz2 = gz2 - dpot_dsj*hz - dpot_dsij*ez[i];
-
-				/*if(j == 255 && fxi < -10){
-					cout << "AFTER CUTOFF" << endl;
-					cout << "fxi = " << fxi << endl;
-					cout << "rij = " << rij << endl;
-					cout << "rhoterm = " << rhoterm << endl;
-					cout << "rhoc = " << rhoc << endl;
-					cout << "rho6c = " << rho6c << endl;
-					cout << "rho12c = " << rho12c << endl;
-					cout << "sigma = " << sigma << endl;
-					cout << "si = " << si << endl;
-					cout << "sj = " << sj << endl;
-					cout << "sp = " << sp << endl;
-					cout << "sm = " << sm << endl;
-					cout << "(xi, yi, zi) = (" << x[i] << ", " << y[i] 
-						<< ", " << z[i] << ")" << endl;
-					cout << "(xj, yj, zj) = (" << x[j] << ", " << y[j] 
-						<< ", " << z[j] << ")" << endl;
-					cout << "(hx, hy, hz) = (" << hx << ", " << hy << ", " 
-						 << hz << ")" << endl;
-					cout << "(exi, eyi, ezi) = (" << ex[i] << ", " 
-						<< ey[i] << ", " << ez[i] << ")" << endl;
-					cout << "(exj, eyj, ezj) = (" << ex[j] << ", "
-						<< ey[j] << ", " << ez[j] << ")" << endl;
-					cout << "spchi = " << spchi << endl; 
-					cout << "smchi = " << smchi << endl;
-					cout << "chi = " << chi <<endl;
-					cout << "dpot_drij = " << dpot_drij << endl;
-					cout << "dpot_dsi = " << dpot_dsi << endl;
-					cout << "dpot_dsj = " << dpot_dsj << endl;
-					cout << "i = " << i << endl;
-					cout << "j = " << j << endl << endl;
-				}*/
 
 				//  Write forces and torques
 				fx[i] = fx[i] + fxi;
@@ -709,8 +630,3 @@ void iterate	(double* x, double* y, double* z,
 		}
 	}
 }
-
-
-
-
-

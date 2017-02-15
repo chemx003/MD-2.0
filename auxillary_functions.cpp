@@ -412,6 +412,3 @@ void write_vectors_colored(double* x, double* y, double* z,
 
 	o.close();
 }
-
-
-
