@@ -1,9 +1,6 @@
-#include <cmath>
-#include <fstream>
-#include <iostream>
+#include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
-
-using namespace std;
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
@@ -50,7 +47,7 @@ int check_unit_length(double* x, double* y, double* z){
 	for(int i = 0; i < N; i++) {
 		mag = x[i]*x[i] + y[i]*y[i] + z[i]*z[i];
 
-		if(abs(mag - 1.0) > 0.001){
+		if(fabs(mag - 1.0) > 0.001){
 			unit = -1;
 		}
 	}
@@ -78,15 +75,15 @@ double newton_raphson(double ex, double ey, double ez,
 	
 
 	if(isnan(ux)==0 && isnan(uy)==0 && isnan(uz)==0){
-		while(abs(l - lOld) > 0.01 && isnan(l)==0){
+		while(fabs(l - lOld) > 0.01 && isnan(l)==0){
 			temp = l;
 			l = lOld - (lOld*lOld + 2*lOld*(dot1+1/dt) + dot2  + 2*dot1/dt)/
 				(2*lOld + 2*dot1 + 1/dt);
 			count++;
 			lOld = temp; 
 			if(count > 1000){
-				cout << count << endl;
-				cout << "i = " << i <<",l = " <<  l << endl << endl;
+				printf("count = %i\n",count);
+				printf("i = %i, l = %f\n",i,l);
 			} 
 		}
 	}
@@ -95,50 +92,44 @@ double newton_raphson(double ex, double ey, double ez,
 }
 
 void print_energies(){
-	cout << "ENERGIES" << endl << endl;
+	printf("ENERGIES\n");
 
-	cout << "KT = " << KT << endl;
-	cout << "KR = " << KR << endl;
-	cout << "K = " << K << endl;
-	cout << "V = " << V << endl;
-	cout << "E = " << E << endl;
-
-	cout << endl;
+	printf("KT = %f\n", KT);
+	printf("KR = %f\n", KR);
+	printf("K = %f\n", K);
+	printf("V = %f\n", V);
+	printf("E = %f\n\n", E);
 }
 
 void print_global_variables(){
-	cout << "GLOBAL VARIABLES" << endl << endl;
+	printf("GLOBAL VARIABLES\n");
 	
-	cout << "N = " << N << endl << endl;
+	printf("N = %i\n", N);
 
-	cout << "num_steps = " << num_steps << endl;
-	cout << "dt = " << dt << endl;
-	cout << "temp_init = " << temp_init << endl << endl;
+	printf("num_steps = %f\n", num_steps);
+	printf("dt = %f\n", dt);
+	printf("temp_init = %f\n\n", temp_init);
 
-	cout << "L = " << L << endl << endl;
+	printf("L = %f\n ", L);
 
-	cout << "M = " << M << endl;
-	cout << "I = " << I << endl << endl;
+	printf("M = %f\n", M);
+	printf("I = %f\n\n", I);
 
-	cout << "KB = " << KB << endl << endl;
+	printf("KB = %f\n\n", KB);
 
-	cout << "KT = " << KT << endl;
-	cout << "KR = " << KR << endl;
-	cout << "K = " << K << endl;
-	cout << "V = " << V << endl;
-	cout << "E = " << E << endl;
-	cout << "P = " << P << endl;
-	cout << "T = " << T << endl;
-
-	cout << endl;
+	printf("KT = %f\n", KT);
+	printf("KR = %f\n", KR);
+	printf("K = %f\n", K);
+	printf("V = %f\n", V);
+	printf("E = %f\n", E);
+	printf("P = %f\n", P);
+	printf("T = %f\n\n", T);
 }
 
 void print_temp(){
-	cout << "TEMPERATURE" << endl << endl;
+	printf("TEMPERATURE\n");
 
-	cout << "T = " << T << endl;
-
-	cout << endl;
+	printf("T = %f\n\n",T);
 }
 
 //  Rescale the velocities to temp_init .... move this to auxilary functions 
@@ -225,12 +216,14 @@ double return_temp(){
 
 //  Write the energies to a file 'time' refers to the current timestep
 void write_energies(int time){
-	ofstream o;
-	o.open("energy.dat", ios::app);
-	
-	o << time << "\t" << V << "\t" << K << "\t" << E << endl;
+//	ofstream o;
+//	o.fopen("energy.dat", ios::app);
+	FILE* o;
+	o = fopen("energy.dat", "a");
 
-	o.close();
+	fprintf(o, "%i\t%f\t%f\t%f\n", time, V, K, E);
+
+	fclose(o);
 }
 
 //  Writes the scalar order parameter to a file
@@ -250,14 +243,14 @@ void write_sop(double* ex, double* ey, double* ez, int time){
 
 	sopx = sopx / N; sopy = sopy /N; sopz = sopz / N;
 
-	ofstream o;
-	o.open("sop.dat", ios::app);
+	FILE* o;
+	o = fopen("sop.dat", "a");
 
-	if(abs(sopx)<3.0){
-		o << time << " " << sopx << " " << sopy << " " << sopz << endl;
+	if(fabs(sopx)<3.0){
+		fprintf(o,"%i\t%f\t%f\t%f\n", time, sopx, sopy, sopz);
 	}
 
-	o.close();
+	fclose(o);
 }
 
 //  Writes orientation pair correlation
@@ -280,7 +273,7 @@ void write_ocf(double* x, double* y, double* z,
 				
 				r = sqrt(dx*dx + dy*dy + dz*dz);
 
-				if(r > R and r < R+dR){
+				if(r > R && r < R+dR){
 					histo2[b][1] = histo2[b][1] 
 						+ (3*pow(ex[i]*ex[j] + ey[i]*ey[j] + ez[i]*ez[j],2) - 1)/2;
 				}
@@ -291,19 +284,19 @@ void write_ocf(double* x, double* y, double* z,
 
 	//  Write to file
 	if(avg == 1){
-		ofstream p;
-		p.open("ocf.dat");
+		FILE* p;
+		p = fopen("ocf.dat","a");
 
 		R = dR;
 
 		for(int b = 0; b < pcf_bins; b++) {
 			histo2[b][1] = histo2[b][1] / pcf_num_steps;
 			histo2[b][1] = 2*histo2[b][1] / (4*PI*R*R*dR*N*N/(L*SL*SL));
-			p << histo2[b][0] << " " << histo2[b][1] << endl;	
+			fprintf(p, "%f\t%f\n", histo2[b][0], histo2[b][1]);	
 			R = R + dR;
 		}
 		
-		p.close();
+		fclose(p);
 	}
 }
 
@@ -328,7 +321,7 @@ void write_pcf(double* x, double* y, double* z,
 				
 				r = sqrt(dx*dx + dy*dy + dz*dz);
 
-				if(r > R and r < R+dR){
+				if(r > R && r < R+dR){
 					histo[b][1]++;
 				}
 			}
@@ -338,77 +331,76 @@ void write_pcf(double* x, double* y, double* z,
 	
 	//  Write to file
 	if(avg == 1){
-		ofstream p;
-		p.open("pcf.dat");
+		FILE* p;
+		p = fopen("pcf.dat", "a");
 
 		R = dR;
 		for(int b = 1; b < pcf_bins; b++) {
 			histo[b][1] = histo[b][1] / pcf_num_steps;
 			histo[b][1] = 2*histo[b][1] / (4*PI*R*R*dR*N*N/(L*SL*SL));
-			p << histo[b][0] << " " << histo[b][1] << endl;
+			fprintf(p,"%f\t%f\n", histo[b][0], histo[b][1]);
 			R = R + dR;
 		}
 		
-		p.close();
+		fclose(p);
 	}
 }
 
 //  Write one point to a file
 void write_point(double x, double y, double z,
 				 double ex, double ey, double ez){
-	ofstream o;
-	o.open("points.dat", ios::app);
+	FILE* o;
+	o = fopen("points.dat", "a");
 
-	o << x << "    " << y << "     " << z << "     " 
-	  << ex << "    " << ey << "    " << ez << "     " << endl;
+	fprintf(o, "%f\t%f\t%f\t%f\t%f\t%f\n", x, y, z, ex, ey, ez);
 
-	o.close();
+	fclose(o);
 }
 
 //  Writes the temperature to a file
 void write_temp(double time){
-	ofstream o; 
-	o.open("temp.dat", ios::app);
+	FILE* o; 
+	o = fopen("temp.dat", "a");
 
 	calc_temp();
 
-	o << time << "     " << T << endl;
+	fprintf(o,"%f\t%f\n", time, T);
 
-	o.close();
+	fclose(o);
 }
 
 //  Write the positions and orientations to a file for display puposes
 void write_vectors(double* x, double* y, double* z,
 				   double* ex, double* ey, double* ez){
-	ofstream o;
-	o.open("vector.dat", ios::app);
+	FILE* o;
+	o = fopen("vector.dat", "a");
 
 	for(int i = 0; i < N; i++){
-		o << x[i] << "\t" << y[i] << "\t" << z[i] << "       "
-		  << ex[i] << "\t" << ey[i] << "\t" << ez[i] << endl;
+		fprintf(o, "%f\t%f\t%f\t%f\t%f\t%f\n", x[i], y[i], z[i], 
+				ex[i], ey[i], ez[i]);
 	}
 
 	//  Need extra lines for gnuplot to recognize blocks	
-	o << endl << endl << endl;
+	fprintf(o, "\n\n");
 
-	o.close();
+	fclose(o);
 }
 
-//  same as write, but extra integer to mark color
+/*  same as write, but extra integer to mark color
 void write_vectors_colored(double* x, double* y, double* z,
 				   double* ex, double* ey, double* ez,
 				   double* color){
-	ofstream o;
-	o.open("vector.dat", ios::app);
+	FILE* o;
+	o = fopen("vector.dat", "a");
 
 	for(int i = 0; i < N; i++){
-		o << x[i] << "\t" << y[i] << "\t" << z[i] << "\t"
-		  << ex[i] << "\t" << ey[i] << "\t" << ez[i] << "\t" 
-		  << (int) color[i] << endl;
+		o, x[i],"\t",y[i],"\t",z[i],"\t"
+		 ,ex[i],"\t",ey[i],"\t",ez[i],"\t" 
+		 ,(int) color[i]);
 	}
 
 	//  Need extra lines for gnuplot to recognize blocks	
-	o << endl << endl << endl;
+	o,endl,endl);
 
-	o.close();
-}
+	o.fclose();
+}*/

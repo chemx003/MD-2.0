@@ -1,5 +1,5 @@
-main: main.cpp
-	g++ -o c-main main.cpp auxillary_functions.cpp 
+main: main.c
+	gcc -o c-main main.c auxillary_functions.c -lm -O3
 	make clean
 
 clean:

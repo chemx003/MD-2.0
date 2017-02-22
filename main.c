@@ -1,13 +1,11 @@
-#include <cmath>
-#include <fstream>
-#include <iostream>
+#include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include "auxillary_functions.h"
 #include <sys/types.h>
 #include <unistd.h>
 #include <signal.h>
-using namespace std;
 
 /*-----------------------  Function Declarations  ----------------------------*/
 //  Gay-Berne: Calulate the forces and torques
@@ -116,7 +114,7 @@ int main(){
 		}
 
 		if(i%100 == 0) {
-			cout << i << endl;
+			printf("%i\n", i);
 
 			calc_E(); print_energies();
 			calc_temp(); print_temp();
@@ -133,7 +131,7 @@ int main(){
 			avg_temp = avg_temp + return_temp();
 			c_temp++;
 
-			if(abs(return_sopx(ex))<3.0){
+			if(fabs(return_sopx(ex))<3.0){
 				avg_sop = avg_sop + return_sopx(ex);
 				c_sop++;
 			}
@@ -148,8 +146,8 @@ int main(){
 	avg_temp = avg_temp/c_temp;
 	avg_sop = avg_sop/c_sop;
 
-	cout << "AVG_TEMP = " << avg_temp << endl;
-	cout << "AVG_SOPX = " << avg_sop << endl << endl;
+	printf("AVG_TEMP = %f\n", avg_temp);
+	printf("AVG_SOPX = %f\n\n", avg_sop);
 
 	//  Analysis & Post-Processing
 	write_pcf(x, y, z, histo, 1);
@@ -209,8 +207,8 @@ void gb		(double* x, double* y, double* z,
 
 	//  Resetting quantiies
 	for(int i = 0; i < N; i++) {
-		fx[i] = 0; fy[i] = 0; fz[i] = 0;
-		gx[i] = 0; gy[i] = 0; gz[i] = 0;
+		fx[i] = 0.0; fy[i] = 0.0; fz[i] = 0.0;
+		gx[i] = 0.0; gy[i] = 0.0; gz[i] = 0.0;
 	}
 	V = 0; P = 0;
 
@@ -223,16 +221,16 @@ void gb		(double* x, double* y, double* z,
 			dz = z[i] - z[j];
 
 			//  Apply minimum image critereon (trying a different method)
-			if(abs(dx) > 0.5*L){
-				dx = dx - L*(dx / abs(dx));
+			if(fabs(dx) > 0.5*L){
+				dx = dx - L*(dx / fabs(dx));
 			}
 
-			if(abs(dy) > 0.5*SL){
-				dy = dy - SL*(dy / abs(dy));
+			if(fabs(dy) > 0.5*SL){
+				dy = dy - SL*(dy / fabs(dy));
 			}
 			
-			if(abs(dz) > 0.5*SL){
-				dz = dz - SL*(dz / abs(dz));
+			if(fabs(dz) > 0.5*SL){
+				dz = dz - SL*(dz / fabs(dz));
 			}
 
 			//  magnitude of rj
@@ -320,6 +318,11 @@ void gb		(double* x, double* y, double* z,
 				gy2 = dpot_dsj*hy + dpot_dsij*ey[i];
 				gz2 = dpot_dsj*hz + dpot_dsij*ez[i]; 
 
+				if(gx1>10000){
+					printf("gx1 = %f\n rij = %f\n i = %i, j = %i\n\n", 
+							gx1, rij, i, j);
+				}
+
 				//  Derivatives of the potential at the cuttoff
 				dpot_drij = epsilon * dcutterm;
 				dpot_dsi = cutterm*deps_dsi - epsilon*dcutterm*dsig_dsi;
@@ -402,7 +405,7 @@ void init	(double* x, double* y, double* z,
 	a = L / NUM_LINE;
 	b = SL / NUM_LINE;
 
-	cout << "SPACING = " << a << endl << endl;
+	printf("SPACING = %f\n\n", a);
 
 	for(int i = 0; i < NUM_LINE; i++) {
 		for(int j = 0; j < NUM_LINE; j++) {
@@ -535,26 +538,23 @@ void iterate	(double* x, double* y, double* z,
 		double lm1 = -b + sqrt(b*b - d1 - 2*d2/dt);
 		double lm2 = -b - sqrt(b*b - d1 - 2*d2/dt);
 		lm = lm1;
-		if(abs(lm2) < abs(lm1)){ lm = lm2; }
+		if(fabs(lm2) < fabs(lm1)){ lm = lm2; }
 
 		//cout << "lm = " << lm << endl;
 
 		double mag = ex[i]*ex[i] + ey[i]*ey[i] + ez[i]*ez[i];
-		if(abs(1-mag) > 0.1){
-			cout << "i = " << i << ",mag = " << mag << endl;
+		if(fabs(1-mag) > 0.1){
+			printf("i = %i\t mag = %f\n", i, mag);
 		}
 
 		if(isnan(lm)!=0){
-			cout << "LM IS NAN for i = " << i << endl;
+			printf("LM IS NAN for i = %i\n", i);
 			double mag = ex[i]*ex[i] + ey[i]*ey[i] + ez[i]*ez[i];
-			cout << "mag = " << mag << endl;
-			cout << "b = " << b << endl;
-			cout << "d2 = " << d2 << endl;
-			cout << "(ux,uy,uz) = (" << ux[i]  << "," << uy[i]
-				<< "," << uz[i] << ")" << endl;
-			cout << "(gx,gy,gz) = (" << gx[i] << "," << gy[i]
-				<< "," << gz[i] << ")";
-			cout << endl << endl;
+			printf("mag = %f\n", mag);
+			printf("b = %f\n", b);
+			printf("d2 = %f\n", d2);
+			printf("(ux,uy,uz) = (%f,%f,%f)\n", ux[i], uy[i], uz[i]);
+			printf("(gx,gy,gz) =  (%f,%f,%f)\n\n\n)", gx[i], gy[i], gz[i]);
 			kill(getpid(), SIGKILL);
 		}
 
