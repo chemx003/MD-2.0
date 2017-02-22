@@ -282,7 +282,7 @@ void write_ocf(double* x, double* y, double* z,
 
 				if(r > R and r < R+dR){
 					histo2[b][1] = histo2[b][1] 
-						+ (3*(ex[i]*ex[j] + ey[i]*ey[j] + ez[i]*ez[j]) - 1)/2;
+						+ (3*pow(ex[i]*ex[j] + ey[i]*ey[j] + ez[i]*ez[j],2) - 1)/2;
 				}
 			}
 		}

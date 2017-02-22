@@ -39,12 +39,12 @@ using namespace std;
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
 int 	N				= 216,			//  Number of particles
-		pcf_bins		= 200,			//  Number of bins for pcf
+		pcf_bins		= 400,			//  Number of bins for pcf
 		pcf_num_steps	= 200;			// 	Steps to avg pcf over
 
 double 	num_steps 		= 35000, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
-	   	temp_init 		= 1.0,			//  Initial temperature
+	   	temp_init 		= 2.0,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
 	   	L				= 18.1,			//  Length of simulation box
@@ -207,9 +207,6 @@ void gb		(double* x, double* y, double* z,
 	//  Example chooses eps0 and sigma_s equal 1 by units...
 	/*-----------------------------------------------------------*/
 
-	ofstream p;
-	p.open("force.dat", ios::app);
-
 	//  Resetting quantiies
 	for(int i = 0; i < N; i++) {
 		fx[i] = 0; fy[i] = 0; fz[i] = 0;
@@ -305,10 +302,6 @@ void gb		(double* x, double* y, double* z,
 				dpot_dsi = rhoterm*deps_dsi - epsilon*drhoterm*dsig_dsi;
 				dpot_dsj = rhoterm*deps_dsj - epsilon*drhoterm*dsig_dsj;
 				dpot_dsij = rhoterm*deps_dsij - epsilon*drhoterm*dsig_dsij;
-
-			/*	p<<i<< "     " << j << "     " << x[i] << "     " << x[j] 
-					<< "     " << -rij << "     " << sigma
-					<< "     " << rho << "     " << -dpot_drij*hx << endl;  */
 
 				//  Forces at rij
 				fxi = -dpot_drij*hx - dpot_dsi*(ex[i] - si*hx)/rij
