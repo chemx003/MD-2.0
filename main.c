@@ -36,13 +36,13 @@
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 216,			//  Number of particles
+int 	N				= 1,			//  Number of particles
 		pcf_bins		= 400,			//  Number of bins for pcf
 		pcf_num_steps	= 200;			// 	Steps to avg pcf over
 
-double 	num_steps 		= 35000, 		//  Number of timesteps
+double 	num_steps 		= 25000, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
-	   	temp_init 		= 2.5,			//  Initial temperature
+	   	temp_init 		= 1.0,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
 	   	L				= 18.1,			//  Length of simulation box
@@ -188,7 +188,7 @@ void gb		(double* x, double* y, double* z,
 
 			//  Rho and its multiples and derivatives
 			rho, rho6, rho12, rhoterm, drhoterm,
-			rhoc, rho6c, rho12c, 
+			rhoc, rho6c, rho12c,
 
 			//  Derivatives of sigma
 			dsig_dsi, dsig_dsj, dsig_dsij, prefac,
@@ -197,7 +197,12 @@ void gb		(double* x, double* y, double* z,
 			pot, dpot_drij, dpot_dsi, dpot_dsj, dpot_dsij,
 
 			//  Forces and torques between pairs
-			fxi, fyi, fzi, gx1, gy1, gz1, gx2, gy2, gz2;
+			fxi, fyi, fzi, gx1, gy1, gz1, gx2, gy2, gz2,
+
+			//  Sphere quantities
+			rhoS, rhoS18, rhoS19, sigmaS,
+			r, r2, r6, r7, re, re5, re6, root, root3,
+			chiS, R, W;
 
 	/*----------------------Set Parameters-----------------------*/
 	mu = 2.0; nu = 1.0;
@@ -216,7 +221,7 @@ void gb		(double* x, double* y, double* z,
 		fx[i] = 0.0; fy[i] = 0.0; fz[i] = 0.0;
 		gx[i] = 0.0; gy[i] = 0.0; gz[i] = 0.0;
 	}
-	V = 0; P = 0;
+	V = 0; P = 0; R = 0.5; W = 35000;
 
 	//  Calculations
 	for(int i = 0; i < N-1 ; i++) {
@@ -374,6 +379,75 @@ void gb		(double* x, double* y, double* z,
 			}
 		}
 	}
+
+	for(int i = 0; i < N; i++){
+		//  Components of seperation vector
+		dx = x[i] - L/2.0;
+		dy = y[i] - SL/2.0;
+		dz = z[i] - SL/2.0;
+
+		//  Magnitude of seperation
+		r2 = dx*dx + dy*dy + dz*dz;
+		r = sqrt(r2);
+
+		if(r < R + 3.0){
+			r6 = r*r*r*r*r*r;
+			r7 = r6*r;
+
+			//  Components of the unit vector
+			hx = dx / r; 
+			hy = dy / r;
+			hz = dz / r;
+
+			//  Scalar product of r and e
+			re = hx*ex[i] + hy*ey[i] + hz*ez[i];
+			re5 = re*re*re*re*re;
+			re6 = re5*re;
+
+			chiS = 8.0 / (9.0 + 4*R*R);
+			sigmaS = sqrt((1 + 4*R*R)/2);
+			root = sqrt(1 - chiS*re);
+			root3 = root*root*root;
+			
+			//  Potential at R
+			rhoS = r - sigmaS/sqrt(1 - chiS*re) + 1.0;
+			rhoS18 = pow(1.0/rhoS, 18);
+			rhoS19 = rhoS18/rhoS;
+			
+			//  Force due to sphere
+			fxi = -72 * rhoS19 * (hx + chiS/(2*root3)*(ex[i]/r - re*hx/r));
+			fyi = -72 * rhoS19 * (hy + chiS/(2*root3)*(ey[i]/r - re*hx/r));
+			fzi = -72 * rhoS19 * (hz + chiS/(2*root3)*(ez[i]/r - re*hz/r));
+
+			//  Torque due to sphere
+			gx1 = 72 * rhoS19 * chiS*sigmaS/(2*root3) * hx;
+			gy1 = 72 * rhoS19 * chiS*sigmaS/(2*root3) * hy;
+			gz1 = 72 * rhoS19 * chiS*sigmaS/(2*root3) * hz;
+
+			if(fabs(gx1) > 10000){
+				printf("i = %i\ngx1 = %f\nrhoS19 = %f\nchiS = %f\nre = %f\nroot3 = %f\nrhoS = %f\n\n", i, gx1, rhoS19, chiS, re, root3, rhoS);
+			}
+
+			//  Force due to surface anchoring
+			fxi = fxi - 6*W*(re6/r7*hx - re5/r6*(ex[i]/r - re*hx/r));
+			fyi = fyi - 6*W*(re6/r7*hy - re5/r6*(ey[i]/r - re*hy/r));
+			fzi = fzi - 6*W*(re6/r7*hz - re5/r6*(ez[i]/r - re*hz/r));
+
+			//  Torqe due to surface anchoring
+			gx1 = gx1 - 6*W*re5/r6*hx;
+			gy1 = gy1 - 6*W*re5/r6*hy;
+			gz1 = gz1 - 6*W*re5/r6*hz;
+
+			fx[i] = fx[i] + fxi;
+			fy[i] = fy[i] + fyi;
+			fz[i] = fz[i] + fzi;
+
+			gx[i] = gx[i] - gx1;
+			gy[i] = gy[i] - gy1;
+			gz[i] = gz[i] - gz1;
+		}
+	}
+
 }
 
 /*  Initialize particle positions, orientations, velocities, and angular 
@@ -416,11 +490,18 @@ void init	(double* x, double* y, double* z,
 	for(int i = 0; i < NUM_LINE; i++) {
 		for(int j = 0; j < NUM_LINE; j++) {
 			for(int k = 0; k< NUM_LINE; k++) {
-				if(p<N){
-					//  Assign lattice sites to particle
-					x[p] = (i + 0.5) * a;
-					y[p] = (j +	0.5) * b;
-					z[p] = (k + 0.5) * b;
+
+				//  Generate lattice site
+				double q = L/2 + 1.5;//(i + 0.5) * a;
+				double r = SL/2 + 1.5;//(j +	0.5) * b;
+				double s = SL/2 + 1.5;//(k + 0.5) * b;
+
+				if(p<N && (pow(q - L/2.0, 2) + pow (r - SL/2.0, 2) 
+					 + pow(s - SL/2.0, 2) >= 4)) {
+					//  Assign lattice site to particle 
+					x[p] = q;
+					y[p] = r;
+					z[p] = s;
 
 					//  Assign random orientations
 					ex[p] = 1; //dRand(-1.0, 1.0);
@@ -453,11 +534,11 @@ void init	(double* x, double* y, double* z,
 
 					sumUx2 = sumUx2 + ux[p] * ux[p];
 					sumUy2 = sumUy2 + uy[p] * uy[p];
-					sumUz2 = sumUz2 + uz[p] * uz[p]; 
+					sumUz2 = sumUz2 + uz[p] * uz[p];
+					
+					//  Add to particle count
+					p++;
 				}
-
-				//  Add to particle count
-				p++;
 			}
 		}
 	}
