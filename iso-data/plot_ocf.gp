@@ -3,6 +3,7 @@
 
 set xlabel "r"
 set ylabel "o(r)"
+set logscale y
 
 m=1; a=1;
 gauss(x) = a*exp(-(x-m))

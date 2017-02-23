@@ -42,7 +42,7 @@ int 	N				= 216,			//  Number of particles
 
 double 	num_steps 		= 35000, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
-	   	temp_init 		= 2.0,			//  Initial temperature
+	   	temp_init 		= 2.5,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
 	   	L				= 18.1,			//  Length of simulation box
@@ -81,6 +81,8 @@ int main(){
 			avg_temp, avg_sop;				//  Holders for avgs
 
 	int		c_temp, c_sop;					//  Counters for avgs
+
+	clock_t start = clock(), diff;
 
 	//  Iteration
 	avg_temp = 0.0; avg_sop = 0.0; c_temp = 0.0; c_sop = 0.0;
@@ -152,6 +154,10 @@ int main(){
 	//  Analysis & Post-Processing
 	write_pcf(x, y, z, histo, 1);
 	write_ocf(x, y, z, ex, ey, ez, histo2, 1);
+
+	diff = clock() - start;
+	int msec = diff*1000 / CLOCKS_PER_SEC;
+	printf("Time taken %d seconds %d milliseconds\n\n", msec/1000, msec%1000);
 }
 
 //  Gay-Berne: Calulate the forces and torques
