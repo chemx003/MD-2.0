@@ -36,7 +36,7 @@
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 1,			//  Number of particles
+int 	N				= 900,			//  Number of particles
 		pcf_bins		= 400,			//  Number of bins for pcf
 		pcf_num_steps	= 200;			// 	Steps to avg pcf over
 
@@ -45,8 +45,8 @@ double 	num_steps 		= 25000, 		//  Number of timesteps
 	   	temp_init 		= 1.0,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
-	   	L				= 18.1,			//  Length of simulation box
-	   	SL				= 6.1,			//	Short length of the simulation box
+	   	L				= 30.1,			//  Length of simulation box
+	   	SL				= 18.1,			//	Short length of the simulation box
 
 	   	M				= 1.0,			//	Particle mass
 	  	I				= 1.0,			//  Particle moment of inertia
@@ -221,7 +221,7 @@ void gb		(double* x, double* y, double* z,
 		fx[i] = 0.0; fy[i] = 0.0; fz[i] = 0.0;
 		gx[i] = 0.0; gy[i] = 0.0; gz[i] = 0.0;
 	}
-	V = 0; P = 0; R = 0.5; W = 35000;
+	V = 0; P = 0; R = 1.5; W = 35000;
 
 	//  Calculations
 	for(int i = 0; i < N-1 ; i++) {
@@ -330,8 +330,8 @@ void gb		(double* x, double* y, double* z,
 				gz2 = dpot_dsj*hz + dpot_dsij*ez[i]; 
 
 				if(gx1>10000){
-					printf("gx1 = %f\n rij = %f\n i = %i, j = %i\n\n", 
-							gx1, rij, i, j);
+					printf("gx1 = %f\n rij = %f\n rho = %f\n i = %i, j = %i\n\n", 
+							gx1, rij, rho, i, j);
 				}
 
 				//  Derivatives of the potential at the cuttoff
@@ -390,7 +390,7 @@ void gb		(double* x, double* y, double* z,
 		r2 = dx*dx + dy*dy + dz*dz;
 		r = sqrt(r2);
 
-		if(r < R + 3.0){
+		if(r < R + 4.0){
 			r6 = r*r*r*r*r*r;
 			r7 = r6*r;
 
@@ -410,14 +410,14 @@ void gb		(double* x, double* y, double* z,
 			root3 = root*root*root;
 			
 			//  Potential at R
-			rhoS = r - sigmaS/sqrt(1 - chiS*re) + 1.0;
+			rhoS = r - sigmaS/root + 1.0;
 			rhoS18 = pow(1.0/rhoS, 18);
 			rhoS19 = rhoS18/rhoS;
 			
 			//  Force due to sphere
-			fxi = -72 * rhoS19 * (hx + chiS/(2*root3)*(ex[i]/r - re*hx/r));
-			fyi = -72 * rhoS19 * (hy + chiS/(2*root3)*(ey[i]/r - re*hx/r));
-			fzi = -72 * rhoS19 * (hz + chiS/(2*root3)*(ez[i]/r - re*hz/r));
+			fxi = 72 * rhoS19 * (hx - chiS/(2*root3)*(ex[i]/r - re*hx/r));
+			fyi = 72 * rhoS19 * (hy - chiS/(2*root3)*(ey[i]/r - re*hy/r));
+			fzi = 72 * rhoS19 * (hz - chiS/(2*root3)*(ez[i]/r - re*hz/r));
 
 			//  Torque due to sphere
 			gx1 = 72 * rhoS19 * chiS*sigmaS/(2*root3) * hx;
@@ -492,12 +492,12 @@ void init	(double* x, double* y, double* z,
 			for(int k = 0; k< NUM_LINE; k++) {
 
 				//  Generate lattice site
-				double q = L/2 + 1.5;//(i + 0.5) * a;
-				double r = SL/2 + 1.5;//(j +	0.5) * b;
-				double s = SL/2 + 1.5;//(k + 0.5) * b;
+				double q = (i + 0.5) * a;
+				double r = (j +	0.5) * b;
+				double s = (k + 0.5) * b;
 
 				if(p<N && (pow(q - L/2.0, 2) + pow (r - SL/2.0, 2) 
-					 + pow(s - SL/2.0, 2) >= 4)) {
+					 + pow(s - SL/2.0, 2) >= 9.0)) {
 					//  Assign lattice site to particle 
 					x[p] = q;
 					y[p] = r;
