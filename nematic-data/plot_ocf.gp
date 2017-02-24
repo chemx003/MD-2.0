@@ -6,8 +6,8 @@ set ylabel "o(r)"
 set logscale y
 
 m=1; a=1;
-fit(x) = a*exp(-(x-m))
-fit [1:5] fit(x) "ocf.dat" using 1:2 via m, a
+fit(x) = a*exp(-b*(x-m))
+fit [1:5] fit(x) "ocf.dat" using 1:2 via m, a, b
 
 plot "ocf.dat" with lines, fit(x)
 
