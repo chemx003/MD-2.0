@@ -3,6 +3,7 @@
 
 set xlabel "r"
 set ylabel "g(r)"
+set yrange [0:1.5]
 
 m=1; a=1;
 gauss(x) = a*exp(-(x-m))
