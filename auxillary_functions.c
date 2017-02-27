@@ -270,6 +270,19 @@ void write_ocf(double* x, double* y, double* z,
 				dx = x[i] - x[j];
 				dy = y[i] - y[j];
 				dz = z[i] - z[j];
+
+				//  Apply minimum image critereon (trying a different method)
+				if(fabs(dx) > 0.5*L){
+					dx = dx - L*(dx / fabs(dx));
+				}
+
+				if(fabs(dy) > 0.5*SL){
+					dy = dy - SL*(dy / fabs(dy));
+				}
+				
+				if(fabs(dz) > 0.5*SL){
+					dz = dz - SL*(dz / fabs(dz));
+				}
 				
 				r = sqrt(dx*dx + dy*dy + dz*dz);
 
@@ -318,7 +331,20 @@ void write_pcf(double* x, double* y, double* z,
 				dx = x[i] - x[j];
 				dy = y[i] - y[j];
 				dz = z[i] - z[j];
+
+				//  Apply minimum image critereon (trying a different method)
+				if(fabs(dx) > 0.5*L){
+					dx = dx - L*(dx / fabs(dx));
+				}
+
+				if(fabs(dy) > 0.5*SL){
+					dy = dy - SL*(dy / fabs(dy));
+				}
 				
+				if(fabs(dz) > 0.5*SL){
+					dz = dz - SL*(dz / fabs(dz));
+				}
+	
 				r = sqrt(dx*dx + dy*dy + dz*dz);
 
 				if(r > R && r < R+dR){

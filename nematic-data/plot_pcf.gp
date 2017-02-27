@@ -5,9 +5,9 @@ set xlabel "r"
 set ylabel "g(r)"
 set logscale y
 
-m=1; a=1;
+m=1; a=1; b=1;
 fit(x) = a*exp(-b*(x-m))
-fit [1:18] fit(x) "pcf.dat" using 1:2 via m, a, b
+fit [10:18] fit(x) "pcf.dat" using 1:2 via m, a, b
 
 plot "pcf.dat" with lines, fit(x)
 

@@ -36,16 +36,16 @@
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 900,			//  Number of particles
+int 	N				= 1650,			//  Number of particles
 		pcf_bins		= 400,			//  Number of bins for pcf
 		pcf_num_steps	= 200;			// 	Steps to avg pcf over
 
-double 	num_steps 		= 25000, 		//  Number of timesteps
+double 	num_steps 		= 10000, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
 	   	temp_init 		= 1.0,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
-	   	L				= 30.1,			//  Length of simulation box
+	   	L				= 36.1,			//  Length of simulation box
 	   	SL				= 18.1,			//	Short length of the simulation box
 
 	   	M				= 1.0,			//	Particle mass
@@ -221,7 +221,7 @@ void gb		(double* x, double* y, double* z,
 		fx[i] = 0.0; fy[i] = 0.0; fz[i] = 0.0;
 		gx[i] = 0.0; gy[i] = 0.0; gz[i] = 0.0;
 	}
-	V = 0; P = 0; R = 1.5; W = 35000;
+	V = 0; P = 0; R = 3.0; W = 300000;
 
 	//  Calculations
 	for(int i = 0; i < N-1 ; i++) {
@@ -390,7 +390,7 @@ void gb		(double* x, double* y, double* z,
 		r2 = dx*dx + dy*dy + dz*dz;
 		r = sqrt(r2);
 
-		if(r < R + 4.0){
+		if(r < R + 3.0){
 			r6 = r*r*r*r*r*r;
 			r7 = r6*r;
 
@@ -497,7 +497,7 @@ void init	(double* x, double* y, double* z,
 				double s = (k + 0.5) * b;
 
 				if(p<N && (pow(q - L/2.0, 2) + pow (r - SL/2.0, 2) 
-					 + pow(s - SL/2.0, 2) >= 9.0)) {
+					 + pow(s - SL/2.0, 2) >= 16.0)) {
 					//  Assign lattice site to particle 
 					x[p] = q;
 					y[p] = r;
