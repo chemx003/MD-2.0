@@ -5,9 +5,9 @@ set xlabel "r"
 set ylabel "o(r)"
 
 m=1; a=1;
-gauss(x) = a*exp(-b*(x-m))
-fit [1:5] gauss(x) "ocf.dat" using 1:2 via m, a, b 
+f(x) = a*exp(-b*(x-m))
+fit [1:5] f(x) "ocf.dat" using 1:2 via m, a, b 
 
-plot "ocf.dat" with lines, gauss(x)
+plot "ocf.dat" with lines, f(x)
 
 pause -1
