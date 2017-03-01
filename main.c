@@ -42,7 +42,7 @@ int 	N				= 216,			//  Number of particles
 
 double 	num_steps 		= 35000, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
-	   	temp_init 		= 2.5,			//  Initial temperature
+	   	temp_init 		= 1.0,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
 	   	L				= 18.1,			//  Length of simulation box
