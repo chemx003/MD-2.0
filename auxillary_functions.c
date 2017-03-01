@@ -9,20 +9,22 @@ extern int 	N,								//  Number of particles
 	   		pcf_num_steps;					//  Steps to avg pcf over
 
 extern double 	num_steps, 					//  Number of timesteps
-	   	dt, 								//  Length of time step
-	   	temp_init,							//  Initial temperature
-	   	xi, eta,							//  Thermostat variables
+				dt, 						//  Length of time step
+				temp_init,					//  Initial temperature
+				xi, eta,					//  Thermostat variables
 
-	   	L, SL,									//  Length of simulation box
+				L, SL,						//  Length of simulation box
 
-	   	M,									//	Particle mass
-	  	I,									//  Particle moment of inertia
+				M,							//	Particle mass
+				I,							//  Particle moment of inertia
+				R,							//  Sphere radius
+				W,							//  Anchoring coefficient
 
-		KB,									//  Boltzmann Constant
-		PI;
+				KB,							//  Boltzmann Constant
+				PI;
 
 //  Data
-extern double	KT, KR, K, V, E, 					//  Pot, kin, tot energies
+extern double	KT, KR, K, V, E, 			//  Pot, kin, tot energies
 				P,							//  Pressure
 				T;							//  Temperature
 
@@ -59,6 +61,24 @@ int check_unit_length(double* x, double* y, double* z){
 double dRand(double dMin, double dMax){
 	double d = (double) rand() / RAND_MAX;
 	return dMin + d * (dMax - dMin);
+}
+
+//  Set information = NAN if overlap with sphere
+void mark_particles(double* x, double* y, double* z,
+			  		double* vx, double* vy, double* vz,
+			  		double* ex, double* ey, double* ez,
+			  		double* ux, double* uy, double* uz,
+			  		double* fx, double* fy, double* fz,
+					double* gx, double* gy, double* gz){
+
+	for(int i = 0; i < N; i++){
+		if(pow(x[i] - L/2.0, 2.0) + pow(y[i] - SL/2.0, 2.0) 
+				+ pow(z[i] - SL/2.0, 2.0) <= pow(R + 1.6, 2.0)){
+			x[i] = y[i] = z[i] = vx[i] = vy[i] = vz[i] = NAN;
+			ex[i] = ey[i] = ez[i] = ux[i] = uy[i] = uz[i] = NAN;
+			fx[i] = fy[i] = fz[i] = gx[i] = gy[i] = gz[i] = NAN;
+		}
+	}
 }
 
 //  Newton raphson method for calculating the lagrange multiplier
@@ -132,8 +152,145 @@ void print_temp(){
 	printf("T = %f\n\n",T);
 }
 
-//  Rescale the velocities to temp_init .... move this to auxilary functions 
+//  Reinitialize arrays to shorter length ... after marking NAN
+void resize(double* x, double* y, double* z,
+			 double* vx, double* vy, double* vz,
+			 double* ex, double* ey, double* ez,
+			 double* ux, double* uy, double* uz,
+			 double* fx, double* fy, double* fz,
+			 double* gx, double* gy, double* gz){
+	int	count, newN, p; //  Count up the number NANs			
+	p=0;
 
+	for(int i = 0; i < N; i++) {
+		if(isnan(x[i]) != 0){count++;}
+	}
+
+	printf("count = %i\n\n", count);
+
+	//  Number of particles in the new simulation
+	newN = N - count;
+
+	//  Declare temporary arrays
+	double *tx = (double*) calloc(newN,sizeof(double));
+	double *ty = (double*) calloc(newN,sizeof(double));
+	double *tz = (double*) calloc(newN,sizeof(double));
+
+	double *tvx = (double*) calloc(newN,sizeof(double));
+	double *tvy = (double*) calloc(newN,sizeof(double));
+	double *tvz = (double*) calloc(newN,sizeof(double));
+
+	double *tex = (double*) calloc(newN,sizeof(double));
+	double *tey = (double*) calloc(newN,sizeof(double));
+	double *tez = (double*) calloc(newN,sizeof(double));
+
+	double *tux = (double*) calloc(newN,sizeof(double));
+	double *tuy = (double*) calloc(newN,sizeof(double));
+	double *tuz = (double*) calloc(newN,sizeof(double));
+
+	double *tfx = (double*) calloc(newN,sizeof(double));
+	double *tfy = (double*) calloc(newN,sizeof(double));
+	double *tfz = (double*) calloc(newN,sizeof(double));
+
+	double *tgx = (double*) calloc(newN,sizeof(double));
+	double *tgy = (double*) calloc(newN,sizeof(double));
+	double *tgz = (double*) calloc(newN,sizeof(double));
+	
+	//  Assign values to the temporary arrays
+	for(int i = 0; i < N; i++) {
+		if(isnan(x[i]) == 0){
+			tx[p] = x[i];
+			ty[p] = y[i];
+			tz[p] = z[i];
+
+			tvx[p] = vx[i];
+			tvy[p] = vy[i];
+			tvz[p] = vz[i];
+
+			tex[p] = ex[i];
+			tey[p] = ey[i];
+			tez[p] = ez[i];
+
+			tux[p] = ux[i];
+			tuy[p] = uy[i];
+			tuz[p] = uz[i];
+
+			tfx[p] = fx[i];
+			tfy[p] = fy[i];
+			tfz[p] = fz[i];
+
+			tgx[p] = gx[i];
+			tgy[p] = gy[i];
+			tgz[p] = gz[i];
+
+			p++;
+		}
+	}
+
+	//  Assign arrays to temp array pointer
+	for(int i = 0; i < N; i++){
+		if(i<newN){
+			x[i] = tx[i];
+			y[i] = ty[i];
+			z[i] = tz[i];
+
+			vx[i] = tvx[i];
+			vy[i] = tvy[i];
+			vz[i] = tvz[i];
+
+			ex[i] = tex[i];
+			ey[i] = tey[i];
+			ez[i] = tez[i];
+
+			ux[i] = tux[i];
+			uy[i] = tuy[i];
+			uz[i] = tuz[i];
+
+			fx[i] = tfx[i];
+			fy[i] = tfy[i];
+			fz[i] = tfz[i];
+
+			gx[i] = tgx[i];
+			gy[i] = tgy[i];
+			gz[i] = tgz[i];
+		}
+		else{
+			x[i] = 0;
+			y[i] = 0;
+			z[i] = 0;
+
+			vx[i] = 0;
+			vy[i] = 0;
+			vz[i] = 0;
+
+			ex[i] = 0;
+			ey[i] = 0;
+			ez[i] = 0;
+
+			ux[i] = 0;
+			uy[i] = 0;
+			uz[i] = 0;
+
+			fx[i] = 0;
+			fy[i] = 0;
+			fz[i] = 0;
+
+			gx[i] = 0;
+			gy[i] = 0;
+			gz[i] = 0;	
+		}
+	}
+
+	
+	for(int i = 0; i < N; i++){
+		printf("x[p] = %f\n", x[i]);
+	}
+
+	//  Assign new number of particles
+	N = newN;
+}
+
+//  Rescale the velocities to temp_init ... move this to auxilary functions 
 void rescale(double* x, double* y, double* z,
 			 double* vx, double* vy, double* vz,
 			 double* ex, double* ey, double* ez,

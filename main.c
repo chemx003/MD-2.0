@@ -12,7 +12,8 @@
 	void gb		(double* x, double* y, double* z,
 				double* ex, double* ey, double* ez,
 				double* fx, double* fy, double* fz,
-				double* gx, double* gy, double* gz);	
+				double* gx, double* gy, double* gz,
+				int sphere);	
 
 //  Initialize the simulation
 	void init	(double* x, double* y, double* z,
@@ -26,7 +27,8 @@
 			  	double* ex, double* ey, double* ez,
 			  	double* ux, double* uy, double* uz,
 			  	double* fx, double* fy, double* fz,
-			  	double* gx, double* gy, double* gz);
+			  	double* gx, double* gy, double* gz,
+			  	int sphere);
 
 /*  Have write temp and write sop return the values take a sum to calculate 
  *  the average */
@@ -36,20 +38,23 @@
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 1650,			//  Number of particles
+int 	N				= 2197,			//  Number of particles
 		pcf_bins		= 400,			//  Number of bins for pcf
-		pcf_num_steps	= 200;			// 	Steps to avg pcf over
+		pcf_num_steps	= 0;			// 	Steps to avg pcf over
 
-double 	num_steps 		= 10000, 		//  Number of timesteps
+double 	num_steps 		= 3500, 			//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
 	   	temp_init 		= 1.0,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
-	   	L				= 36.1,			//  Length of simulation box
-	   	SL				= 18.1,			//	Short length of the simulation box
+	   	L				= 42.1,			//  Length of simulation box
+	   	SL				= 15.1,			//	Short length of the simulation box
 
 	   	M				= 1.0,			//	Particle mass
 	  	I				= 1.0,			//  Particle moment of inertia
+
+	  	R				= 1.5,			//  Immersed sphere radius
+	  	W				= 35000,		//  Anchoring coefficient
 
 		KB				= 1.0,			//  Boltzmann Constant
 		PI				= 3.14159265358979; //  Pi
@@ -77,8 +82,9 @@ int main(){
 			fx[N], fy[N], fz[N],			//  Forces
 			gx[N], gy[N], gz[N],			//  Gorques
 			histo[pcf_bins][2],				//  Histogram for pcf
-			histo2[pcf_bins][2],				//  Histogram for ocf
+			histo2[pcf_bins][2],			//  Histogram for ocf
 			avg_temp, avg_sop;				//  Holders for avgs
+
 
 	int		c_temp, c_sop;					//  Counters for avgs
 
@@ -94,19 +100,74 @@ int main(){
 	init(x, y, z, vx, vy, vz,ex, ey, ez, ux, uy, uz);	//  Initialize
 
 	//  Calculate the forces and torques
-	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz);
+	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz, 0);
 
-	write_vectors(x, y, z, ex, ey, ez);
+	// write_vectors(x, y, z, ex, ey, ez);
 
 	calc_E(); print_energies();
 	calc_temp(); print_temp();
+	
+	//  Equilibration loop
+	for(int i = 0; i < 1; i++) {
 
+		iterate(x, y, z, vx, vy, vz,
+			   ex, ey, ez, ux, uy, uz,
+			   fx, fy, fz,
+			   gx, gy, gz, 0); 	//  Integrate the eqns of motion		
+
+		calc_E(); write_energies(i);
+
+		if(num_steps-i <= pcf_num_steps){
+			write_pcf(x, y, z, histo, 0);
+			write_ocf(x, y, z, ex, ey, ez, histo2, 0);
+		}
+
+		if(i%100 == 0) {
+			printf("%i\n", i);
+
+			calc_E(); print_energies();
+			calc_temp(); print_temp();
+		}
+
+		/*if(i < 20000) {
+				rescale(x,y,z,xOld,yOld,zOld,ex,ey,ez,exOld,eyOld,ezOld);
+		}*/
+
+		write_sop(ex, ey, ez, i);
+		write_temp(i);
+
+		if(i>30000){
+			avg_temp = avg_temp + return_temp();
+			c_temp++;
+
+			if(fabs(return_sopx(ex))<3.0){
+				avg_sop = avg_sop + return_sopx(ex);
+				c_sop++;
+			}
+		}
+
+		if(i%10 == 0) {write_vectors(x, y, z, ex, ey, ez);}
+	}
+	
+	//  Carve away sphere
+	mark_particles(x, y, z, vx, vy, vz, 
+					ex, ey, ez, ux, uy, uz, 
+					fx, fy, fz, gx, gy, gz);
+
+	resize(x, y, z, vx, vy, vz, 
+			ex, ey, ez, ux, uy, uz, 
+			fx, fy, fz, gx, gy, gz);
+
+	//  Calculate the forces and torques w/ sphere
+	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz, 1);
+
+	//  Loop with sphere forces
 	for(int i = 0; i < num_steps; i++) {
 
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
 			   fx, fy, fz,
-			   gx, gy, gz); 	//  Integrate the eqns of motion		
+			   gx, gy, gz, 1); 	//  Integrate the eqns of motion		
 
 		calc_E(); write_energies(i);
 
@@ -142,7 +203,8 @@ int main(){
 		if(i%10 == 0) {write_vectors(x, y, z, ex, ey, ez);}
 	}
 
-	calc_E(); print_energies();
+
+	/*calc_E(); print_energies();
 	calc_temp(); print_temp();
 
 	avg_temp = avg_temp/c_temp;
@@ -153,7 +215,7 @@ int main(){
 
 	//  Analysis & Post-Processing
 	write_pcf(x, y, z, histo, 1);
-	write_ocf(x, y, z, ex, ey, ez, histo2, 1);
+	write_ocf(x, y, z, ex, ey, ez, histo2, 1);*/
 
 	diff = clock() - start;
 	int msec = diff*1000 / CLOCKS_PER_SEC;
@@ -164,7 +226,8 @@ int main(){
 void gb		(double* x, double* y, double* z,
 			double* ex, double* ey, double* ez,
 			double* fx, double* fy, double* fz,
-			double* gx, double* gy, double* gz){
+			double* gx, double* gy, double* gz, 
+			int sphere){
 	
 	double	mu, nu,					//  Exponents -adustable parameters
 			kappa, xappa, 			//  Ratio of length and energy parameters
@@ -202,7 +265,7 @@ void gb		(double* x, double* y, double* z,
 			//  Sphere quantities
 			rhoS, rhoS18, rhoS19, sigmaS,
 			r, r2, r6, r7, re, re5, re6, root, root3,
-			chiS, R, W;
+			chiS;
 
 	/*----------------------Set Parameters-----------------------*/
 	mu = 2.0; nu = 1.0;
@@ -221,7 +284,7 @@ void gb		(double* x, double* y, double* z,
 		fx[i] = 0.0; fy[i] = 0.0; fz[i] = 0.0;
 		gx[i] = 0.0; gy[i] = 0.0; gz[i] = 0.0;
 	}
-	V = 0; P = 0; R = 3.0; W = 300000;
+	V = 0; P = 0;
 
 	//  Calculations
 	for(int i = 0; i < N-1 ; i++) {
@@ -390,7 +453,11 @@ void gb		(double* x, double* y, double* z,
 		r2 = dx*dx + dy*dy + dz*dz;
 		r = sqrt(r2);
 
-		if(r < R + 3.0){
+		// if(r < R + 3.0){printf("%f\n",r);}
+
+		if(r < R + 3.0 && r > R && sphere == 1){
+			// printf("in sphere terms\n\n");
+
 			r6 = r*r*r*r*r*r;
 			r7 = r6*r;
 
@@ -406,11 +473,12 @@ void gb		(double* x, double* y, double* z,
 
 			chiS = 8.0 / (9.0 + 4*R*R);
 			sigmaS = sqrt((1 + 4*R*R)/2);
-			root = sqrt(1 - chiS*re);
+			root = sqrt(1.0 - chiS*re);
 			root3 = root*root*root;
+			double sigSbyR = sigmaS/root;
 			
 			//  Potential at R
-			rhoS = r - sigmaS/root + 1.0;
+			rhoS = r - sigSbyR + 1.0;
 			rhoS18 = pow(1.0/rhoS, 18);
 			rhoS19 = rhoS18/rhoS;
 			
@@ -425,7 +493,7 @@ void gb		(double* x, double* y, double* z,
 			gz1 = 72 * rhoS19 * chiS*sigmaS/(2*root3) * hz;
 
 			if(fabs(gx1) > 10000){
-				printf("i = %i\ngx1 = %f\nrhoS19 = %f\nchiS = %f\nre = %f\nroot3 = %f\nrhoS = %f\n\n", i, gx1, rhoS19, chiS, re, root3, rhoS);
+				printf("i = %i\nr = %f\ngx1 = %f\nsigmaS = %f\nchiS = %f\nre = %f\nroot = %f\nrhoS = %f\nsigSbyR = %f\n\n", i, r, gx1, sigmaS, chiS, re, root, rhoS, sigSbyR);
 			}
 
 			//  Force due to surface anchoring
@@ -436,7 +504,7 @@ void gb		(double* x, double* y, double* z,
 			//  Torqe due to surface anchoring
 			gx1 = gx1 - 6*W*re5/r6*hx;
 			gy1 = gy1 - 6*W*re5/r6*hy;
-			gz1 = gz1 - 6*W*re5/r6*hz;
+			gz1 = gz1 - 6*W*re5/r6*hz; 
 
 			fx[i] = fx[i] + fxi;
 			fy[i] = fy[i] + fyi;
@@ -485,7 +553,7 @@ void init	(double* x, double* y, double* z,
 	a = L / NUM_LINE;
 	b = SL / NUM_LINE;
 
-	printf("SPACING = %f\n\n", a);
+	printf("SPACING = %f, %f\n\n", a,b);
 
 	for(int i = 0; i < NUM_LINE; i++) {
 		for(int j = 0; j < NUM_LINE; j++) {
@@ -496,8 +564,7 @@ void init	(double* x, double* y, double* z,
 				double r = (j +	0.5) * b;
 				double s = (k + 0.5) * b;
 
-				if(p<N && (pow(q - L/2.0, 2) + pow (r - SL/2.0, 2) 
-					 + pow(s - SL/2.0, 2) >= 16.0)) {
+				if(p<N) {
 					//  Assign lattice site to particle 
 					x[p] = q;
 					y[p] = r;
@@ -591,7 +658,8 @@ void iterate	(double* x, double* y, double* z,
 			  	double* ex, double* ey, double* ez,
 			  	double* ux, double* uy, double* uz,
 			  	double* fx, double* fy, double* fz,
-			  	double* gx, double* gy, double* gz){
+			  	double* gx, double* gy, double* gz,
+			  	int sphere){
 
 	double	xNew, yNew, zNew,			//  Place holders for position
 			exNew, eyNew, ezNew,		//  Place holders for orientation
@@ -664,7 +732,7 @@ void iterate	(double* x, double* y, double* z,
 
 	KT = KR = K = 0;
 
-	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz);
+	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz, sphere);
 
 	for(int i = 0; i < N; i++) {
 		vx[i] = (vx[i] + 0.5*fx[i]*dt/M)/(1 + xi*dt/2);

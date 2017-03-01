@@ -257,3 +257,34 @@ correlation matrix of the fit parameters:
                 m      a      
 m               1.000 
 a              -1.000  1.000 
+
+
+*******************************************************************************
+Tue Feb 28 15:05:26 2017
+
+
+FIT:    data read from "pcf.dat" using 1:2
+        format = x:z
+        x range restricted to [1.00000 : 5.00000]
+        #datapoints = 26
+        residuals are weighted equally (unit weight)
+
+function used for fitting: gauss(x)
+	gauss(x) = a*exp(-(x-m))
+fitted parameters initialized with current variable values
+
+iter      chisq       delta/lim  lambda   m             a            
+   0 -nan              -nan       2.26e-01    1.000000e+00   1.000000e+00
+
+Current data point
+=========================
+#               = 1 out of 26
+x               = -nan           
+z               = inf            
+
+Current set of parameters
+=========================
+m               = -nan           
+a               = nan            
+
+BREAK: Function evaluation yields NaN ("not a number")
