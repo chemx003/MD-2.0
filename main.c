@@ -44,7 +44,7 @@ int 	N				= 2197,			//  Number of particles
 
 double 	num_steps 		= 3500, 			//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
-	   	temp_init 		= 1.0,			//  Initial temperature
+	   	temp_init 		= 2.5,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
 	   	L				= 42.1,			//  Length of simulation box
@@ -53,7 +53,7 @@ double 	num_steps 		= 3500, 			//  Number of timesteps
 	   	M				= 1.0,			//	Particle mass
 	  	I				= 1.0,			//  Particle moment of inertia
 
-	  	R				= 1.5,			//  Immersed sphere radius
+	  	R				= 5.0,			//  Immersed sphere radius
 	  	W				= 35000,		//  Anchoring coefficient
 
 		KB				= 1.0,			//  Boltzmann Constant
