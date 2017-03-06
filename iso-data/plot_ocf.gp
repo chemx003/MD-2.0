@@ -3,7 +3,7 @@
 
 set xlabel "r"
 set ylabel "o(r)"
-set logscale y
+#set logscale y
 
 m=1; a=1; b=1;
 f(x) = a*exp(-b*(x-m))
