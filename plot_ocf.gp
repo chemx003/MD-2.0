@@ -4,9 +4,9 @@
 set xlabel "r"
 set ylabel "o(r)"
 
-m=1; a=1;
+m=1; a=1; b=1;
 f(x) = a*exp(-b*(x-m))
-fit [1:5] f(x) "ocf.dat" using 1:2 via m, a, b 
+#fit [1:5] f(x) "ocf.dat" using 1:2 via m, a, b 
 
 plot "ocf.dat" with lines, f(x)
 

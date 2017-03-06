@@ -38,11 +38,12 @@
 //  Simulation Parameters
 int 	N				= 216,			//  Number of particles
 		pcf_bins		= 700,			//  Number of bins for pcf
-		pcf_num_steps	= 200;			// 	Steps to avg pcf over
+		pcf_num_steps	= 1;			// 	Steps to avg pcf over
 
-double 	num_steps 		= 35000, 		//  Number of timesteps
+double 	num_steps 		= 5000, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
 	   	temp_init 		= 1.0,			//  Initial temperature
+
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
 	   	L				= 18.1,			//  Length of simulation box

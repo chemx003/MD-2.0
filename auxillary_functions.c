@@ -13,7 +13,7 @@ extern double 	num_steps, 					//  Number of timesteps
 	   	temp_init,							//  Initial temperature
 	   	xi, eta,							//  Thermostat variables
 
-	   	L, SL,									//  Length of simulation box
+	   	L, SL,								//  Length of simulation box
 
 	   	M,									//	Particle mass
 	  	I,									//  Particle moment of inertia
@@ -22,7 +22,7 @@ extern double 	num_steps, 					//  Number of timesteps
 		PI;
 
 //  Data
-extern double	KT, KR, K, V, E, 					//  Pot, kin, tot energies
+extern double	KT, KR, K, V, E, 			//  Pot, kin, tot energies
 				P,							//  Pressure
 				T;							//  Temperature
 
@@ -286,9 +286,12 @@ void write_ocf(double* x, double* y, double* z,
 				
 				r = sqrt(dx*dx + dy*dy + dz*dz);
 
-				if(r > R && r < R+dR){
+				if(r < R+dR && r > R){
+					double op = (3*pow(ex[i]*ex[j] + ey[i]*ey[j] + ez[i]*ez[j],2) - 1)/2;
 					histo2[b][1] = histo2[b][1] 
-						+ (3*pow(ex[i]*ex[j] + ey[i]*ey[j] + ez[i]*ez[j],2) - 1)/2;
+						+ op;
+
+					//printf("%f\n", op);
 				}
 			}
 		}
@@ -304,7 +307,7 @@ void write_ocf(double* x, double* y, double* z,
 
 		for(int b = 0; b < pcf_bins; b++) {
 			histo2[b][1] = histo2[b][1] / (pcf_num_steps);
-			histo2[b][1] = histo2[b][1] / (4*PI*R*R*dR*N*N/(L*SL*SL));
+			histo2[b][1] = histo2[b][1];// / (4*PI*R*R*dR*N*N/(L*SL*SL));
 			fprintf(p, "%f\t%f\n", histo2[b][0], histo2[b][1]);	
 			R = R + dR;
 		}

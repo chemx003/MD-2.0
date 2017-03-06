@@ -1146,3 +1146,78 @@ correlation matrix of the fit parameters:
 m               1.000 
 a              -1.000  1.000 
 b              -0.016  0.016  1.000 
+
+
+*******************************************************************************
+Wed Mar  1 15:12:33 2017
+
+
+FIT:    data read from "ocf.dat" using 1:2
+        format = x:z
+        x range restricted to [1.00000 : 5.00000]
+        #datapoints = 161
+        residuals are weighted equally (unit weight)
+
+function used for fitting: f(x)
+	f(x) = a*exp(-b*(x-m))
+fitted parameters initialized with current variable values
+
+iter      chisq       delta/lim  lambda   m             a             b            
+   0 6.0332312445e+00   0.00e+00  3.25e-01    1.000000e+00   1.000000e+00   1.000000e+00
+   5 9.8147974585e-01  -1.93e-03  3.25e-06    6.148140e-01   4.768217e-01   3.332826e-01
+
+After 5 iterations the fit converged.
+final sum of squares of residuals : 0.98148
+rel. change during last iteration : -1.92942e-08
+
+degrees of freedom    (FIT_NDF)                        : 158
+rms of residuals      (FIT_STDFIT) = sqrt(WSSR/ndf)    : 0.0788156
+variance of residuals (reduced chisquare) = WSSR/ndf   : 0.0062119
+
+Final set of parameters            Asymptotic Standard Error
+=======================            ==========================
+m               = 0.614814         +/- 1.563e+11    (2.543e+13%)
+a               = 0.476822         +/- 2.485e+10    (5.211e+12%)
+b               = 0.333283         +/- 0.02569      (7.709%)
+
+correlation matrix of the fit parameters:
+                m      a      b      
+m               1.000 
+a              -1.000  1.000 
+b               0.158 -0.158  1.000 
+
+
+*******************************************************************************
+Sun Mar  5 18:11:29 2017
+
+
+FIT:    data read from "ocf.dat" using 1:2
+        format = x:z
+        x range restricted to [1.00000 : 5.00000]
+        #datapoints = 161
+        residuals are weighted equally (unit weight)
+
+function used for fitting: f(x)
+	f(x) = a*exp(-b*(x-m))
+fitted parameters initialized with current variable values
+
+iter      chisq       delta/lim  lambda   m             a             b            
+   0 2.2103169691e+05   0.00e+00  3.25e-01    1.000000e+00   1.000000e+00   1.000000e+00
+
+
+*******************************************************************************
+Sun Mar  5 18:12:41 2017
+
+
+FIT:    data read from "ocf.dat" using 1:2
+        format = x:z
+        x range restricted to [1.00000 : 5.00000]
+        #datapoints = 161
+        residuals are weighted equally (unit weight)
+
+function used for fitting: f(x)
+	f(x) = a*exp(-b*(x-m))
+fitted parameters initialized with current variable values
+
+iter      chisq       delta/lim  lambda   m             a             b            
+   0 2.2103169691e+05   0.00e+00  3.25e-01    1.000000e+00   1.000000e+00   1.000000e+00
