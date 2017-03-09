@@ -12,7 +12,7 @@
 	void gb		(double* x, double* y, double* z,
 				double* ex, double* ey, double* ez,
 				double* fx, double* fy, double* fz,
-				double* gx, double* gy, double* gz);	
+				double* gx, double* gy, double* gz);
 
 //  Initialize the simulation
 	void init	(double* x, double* y, double* z,
@@ -28,7 +28,7 @@
 			  	double* fx, double* fy, double* fz,
 			  	double* gx, double* gy, double* gz);
 
-/*  Have write temp and write sop return the values take a sum to calculate 
+/*  Have write temp and write sop return the values take a sum to calculate
  *  the average */
 
 /*----------------------------------------------------------------------------*/
@@ -67,7 +67,7 @@ double	KT, KR, K, V, E, 				//  Pot, kin, tot energies
 
 //  Main function
 int main(){
-	
+
 	//  Local variables
 	double 	x[N], y[N], z[N], 				//  Particle coords at n
 			vx[N], vy[N], vz[N],			//	Particle coords at n-1
@@ -107,7 +107,7 @@ int main(){
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
 			   fx, fy, fz,
-			   gx, gy, gz); 	//  Integrate the eqns of motion		
+			   gx, gy, gz); 	//  Integrate the eqns of motion
 
 		calc_E(); write_energies(i);
 
@@ -166,7 +166,7 @@ void gb		(double* x, double* y, double* z,
 			double* ex, double* ey, double* ez,
 			double* fx, double* fy, double* fz,
 			double* gx, double* gy, double* gz){
-	
+
 	double	mu, nu,					//  Exponents -adustable parameters
 			kappa, xappa, 			//  Ratio of length and energy parameters
 			chi, xhi, 				// 	Shape anisotropy parameters
@@ -189,7 +189,7 @@ void gb		(double* x, double* y, double* z,
 
 			//  Rho and its multiples and derivatives
 			rho, rho6, rho12, rhoterm, drhoterm,
-			rhoc, rho6c, rho12c, 
+			rhoc, rho6c, rho12c,
 
 			//  Derivatives of sigma
 			dsig_dsi, dsig_dsj, dsig_dsij, prefac,
@@ -235,7 +235,7 @@ void gb		(double* x, double* y, double* z,
 			if(fabs(dy) > 0.5*SL){
 				dy = dy - SL*(dy / fabs(dy));
 			}
-			
+
 			if(fabs(dz) > 0.5*SL){
 				dz = dz - SL*(dz / fabs(dz));
 			}
@@ -253,7 +253,7 @@ void gb		(double* x, double* y, double* z,
 
 			if(rij < rc){
 				//  Dot products, their sum/difference, and the fractions
-				si = hx*ex[i] + hy*ey[i] + hz*ez[i]; 
+				si = hx*ex[i] + hy*ey[i] + hz*ez[i];
 				sj = hx*ex[j] + hy*ey[j] + hz*ez[j];
 				sp = si + sj; sm = si - sj;
 				sij = ex[i]*ex[j] + ey[i]*ey[j] + ez[i]*ez[j];
@@ -299,7 +299,7 @@ void gb		(double* x, double* y, double* z,
 				deps_dsj = prefac * (spxhi - smxhi);
 				prefac = prefac * (0.5*xhi);
 				deps_dsij = -prefac * (spxhi*spxhi - smxhi*smxhi);
-				deps_dsij = deps_dsij 
+				deps_dsij = deps_dsij
 							+ nu*chi*chi*pow(eps1, nu+2)*pow(eps2, mu)*sij;
 
 				//  Derivatives of the potential at rij
@@ -323,10 +323,10 @@ void gb		(double* x, double* y, double* z,
 
 				gx2 = dpot_dsj*hx + dpot_dsij*ex[i];
 				gy2 = dpot_dsj*hy + dpot_dsij*ey[i];
-				gz2 = dpot_dsj*hz + dpot_dsij*ez[i]; 
+				gz2 = dpot_dsj*hz + dpot_dsij*ez[i];
 
 				if(gx1>10000){
-					printf("gx1 = %f\n rij = %f\n i = %i, j = %i\n\n", 
+					printf("gx1 = %f\n rij = %f\n i = %i, j = %i\n\n",
 							gx1, rij, i, j);
 				}
 
@@ -360,7 +360,7 @@ void gb		(double* x, double* y, double* z,
 
 				fx[j] = fx[j] - fxi;
 				fy[j] = fy[j] - fyi;
-				fz[j] = fz[j] - fzi;		
+				fz[j] = fz[j] - fzi;
 
 				gx[i] = gx[i] - gx1;
 				gy[i] = gy[i] - gy1;
@@ -377,7 +377,7 @@ void gb		(double* x, double* y, double* z,
 	}
 }
 
-/*  Initialize particle positions, orientations, velocities, and angular 
+/*  Initialize particle positions, orientations, velocities, and angular
  *  velocities 																  */
 void init	(double* x, double* y, double* z,
 			 double* vx, double* vy, double* vz,
@@ -399,14 +399,14 @@ void init	(double* x, double* y, double* z,
 	int		NUM_LINE,						//  Max amt of particles in a direc.
 			p;								//  Particles placed
 
-	/*  Initial setting of postions, orientations, velocities and angular 
+	/*  Initial setting of postions, orientations, velocities and angular
 	 *  velocities*/
 	sumVx = sumVy = sumVz = 0.0;
 	sumVx2 = sumVy2 = sumVz2 = 0.0;
 	sumUx2 = sumUy2 = sumUz2 = 0.0;
 
 	p=0; K=0;
-	
+
 	//  Max number of particles along a side of a cube length l with spacing a
 	NUM_LINE = ceil(pow(N, 1.0 / 3.0));
 	a = L / NUM_LINE;
@@ -426,7 +426,7 @@ void init	(double* x, double* y, double* z,
 					//  Assign random orientations
 					ex[p] = 1; //dRand(-1.0, 1.0);
 					ey[p] = 0; //dRand(-1.0, 1.0);
-					ez[p] = 0; //dRand(-1.0, 1.0); 
+					ez[p] = 0; //dRand(-1.0, 1.0);
 
 					mag = sqrt(ex[p]*ex[p] + ey[p]*ey[p] + ez[p]*ez[p]);
 
@@ -441,11 +441,11 @@ void init	(double* x, double* y, double* z,
 
 					ux[p] = dRand(-0.5, 0.5);
 					uy[p] = dRand(-0.5, 0.5);
-					uz[p] = dRand(-0.5, 0.5); 
+					uz[p] = dRand(-0.5, 0.5);
 
 					//  Sum for corrections to energy and mtm
 					sumVx = sumVx + vx[p];
-					sumVy = sumVy + vy[p]; 
+					sumVy = sumVy + vy[p];
 					sumVz = sumVz + vz[p];
 
 					sumVx2 = sumVx2 + vx[p] * vx[p];
@@ -454,7 +454,7 @@ void init	(double* x, double* y, double* z,
 
 					sumUx2 = sumUx2 + ux[p] * ux[p];
 					sumUy2 = sumUy2 + uy[p] * uy[p];
-					sumUz2 = sumUz2 + uz[p] * uz[p]; 
+					sumUz2 = sumUz2 + uz[p] * uz[p];
 				}
 
 				//  Add to particle count
@@ -468,7 +468,7 @@ void init	(double* x, double* y, double* z,
 
 	//  Current mean squared velocities
 	sumVx2 = sumVx2 / N; sumVy2 = sumVy2 / N; sumVz2 = sumVz2 / N;
-	sumUx2 = sumUx2 / N; sumUy2 = sumUy2 / N; sumUz2 = sumUz2 / N; 
+	sumUx2 = sumUx2 / N; sumUy2 = sumUy2 / N; sumUz2 = sumUz2 / N;
 
 	//  Calculate scaling factors
 	sfvx = sqrt(KB * temp_init / sumVx2);
@@ -493,7 +493,7 @@ void init	(double* x, double* y, double* z,
 
 		ux[i] = ux[i] * sfux;
 		uy[i] = uy[i] * sfuy;
-		uz[i] = uz[i] * sfuz; 
+		uz[i] = uz[i] * sfuz;
 
 		//  Calculate the kinetic energy
 		KT = KT + 0.5 * M * (vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i]);
@@ -568,7 +568,7 @@ void iterate	(double* x, double* y, double* z,
 		x[i] = x[i] + vx[i]*dt;
 		y[i] = y[i] + vy[i]*dt;
 		z[i] = z[i] + vz[i]*dt;
- 
+
 		ex[i] = ex[i] + (ux[i] + lm*ex[i])*dt;
 		ey[i] = ey[i] + (uy[i] + lm*ey[i])*dt;
 		ez[i] = ez[i] + (uz[i] + lm*ez[i])*dt;
