@@ -1,6 +1,9 @@
 main: main.c auxillary_functions.c
-	gcc -o c-main main.c auxillary_functions.c -lm 
-	make clean
-
+	make clean-data
+	gcc -o c-main main.c auxillary_functions.c -lm -O3
 clean:
-	rm *.dat
+	make clean-data clean-exe
+clean-data:
+	rm *.dat -f
+clean-exe:
+	rm c-main -f
