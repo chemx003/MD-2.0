@@ -3,4 +3,4 @@ main: main.c auxillary_functions.c
 	make clean
 
 clean:
-	rm *.dat 2>/dev/null
+	rm *.dat -f
