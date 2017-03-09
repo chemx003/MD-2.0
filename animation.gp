@@ -1,6 +1,6 @@
 stats "vector.dat" nooutput
 
-set xrange [-2: 45]
+set xrange [-2: 50]
 set yrange [-2: 20]
 set zrange [-2: 20]
 

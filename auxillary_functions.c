@@ -73,7 +73,7 @@ void mark_particles(double* x, double* y, double* z,
 
 	for(int i = 0; i < N; i++){
 		if(pow(x[i] - L/2.0, 2.0) + pow(y[i] - SL/2.0, 2.0) 
-				+ pow(z[i] - SL/2.0, 2.0) <= pow(R + 1.6, 2.0)){
+				+ pow(z[i] - SL/2.0, 2.0) <= pow(R + 3.0, 2.0)){
 			x[i] = y[i] = z[i] = vx[i] = vy[i] = vz[i] = NAN;
 			ex[i] = ey[i] = ez[i] = ux[i] = uy[i] = uz[i] = NAN;
 			fx[i] = fy[i] = fz[i] = gx[i] = gy[i] = gz[i] = NAN;
@@ -420,8 +420,6 @@ void write_ocf(double* x, double* y, double* z,
 		   r;				//  Seperation distance
 
 	for(int b = 0; b < pcf_bins; b++) {
-		histo2[b][0] = R;
-
 		for(int i = 0; i < N-1; i++) {
 			for(int j = i+1; j < N; j++) {
 				dx = x[i] - x[j];
@@ -444,6 +442,7 @@ void write_ocf(double* x, double* y, double* z,
 				r = sqrt(dx*dx + dy*dy + dz*dz);
 
 				if(r > R && r < R+dR){
+					histo2[b][0]++;
 					histo2[b][1] = histo2[b][1] 
 						+ (3*pow(ex[i]*ex[j] + ey[i]*ey[j] + ez[i]*ez[j],2) - 1)/2;
 				}
@@ -460,8 +459,8 @@ void write_ocf(double* x, double* y, double* z,
 		R = dR;
 
 		for(int b = 0; b < pcf_bins; b++) {
-			histo2[b][1] = histo2[b][1] / pcf_num_steps;
-			histo2[b][1] = 2*histo2[b][1] / (4*PI*R*R*dR*N*N/(L*SL*SL));
+			histo2[b][1] = 2*histo2[b][1] / histo2[b][0];
+			histo2[b][0] = R;
 			fprintf(p, "%f\t%f\n", histo2[b][0], histo2[b][1]);	
 			R = R + dR;
 		}

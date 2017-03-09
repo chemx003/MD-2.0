@@ -38,23 +38,23 @@
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 2197,			//  Number of particles
+int 	N				= 4096,			//  Number of particles
 		pcf_bins		= 400,			//  Number of bins for pcf
-		pcf_num_steps	= 0;			// 	Steps to avg pcf over
+		pcf_num_steps	= 10;			// 	Steps to avg pcf over
 
-double 	num_steps 		= 3500, 			//  Number of timesteps
+double 	num_steps 		= 5000, 			//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
-	   	temp_init 		= 2.5,			//  Initial temperature
+	   	temp_init 		= 1.0,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
-	   	L				= 42.1,			//  Length of simulation box
-	   	SL				= 15.1,			//	Short length of the simulation box
+	   	L				= 48.1,			//  Length of simulation box
+	   	SL				= 16.1,			//	Short length of the simulation box
 
 	   	M				= 1.0,			//	Particle mass
 	  	I				= 1.0,			//  Particle moment of inertia
 
-	  	R				= 5.0,			//  Immersed sphere radius
-	  	W				= 35000,		//  Anchoring coefficient
+	  	R				= 4.0,			//  Immersed sphere radius
+	  	W				= 350000,		//  Anchoring coefficient
 
 		KB				= 1.0,			//  Boltzmann Constant
 		PI				= 3.14159265358979; //  Pi
@@ -108,7 +108,7 @@ int main(){
 	calc_temp(); print_temp();
 	
 	//  Equilibration loop
-	for(int i = 0; i < 1; i++) {
+	for(int i = 0; i < 1000; i++) {
 
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
@@ -123,7 +123,7 @@ int main(){
 		}
 
 		if(i%100 == 0) {
-			printf("%i\n", i);
+			printf("EQBM: %i\n", i);
 
 			calc_E(); print_energies();
 			calc_temp(); print_temp();
@@ -157,6 +157,8 @@ int main(){
 	resize(x, y, z, vx, vy, vz, 
 			ex, ey, ez, ux, uy, uz, 
 			fx, fy, fz, gx, gy, gz);
+
+	write_vectors(x, y, z, ex, ey, ez);
 
 	//  Calculate the forces and torques w/ sphere
 	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz, 1);
@@ -204,7 +206,7 @@ int main(){
 	}
 
 
-	/*calc_E(); print_energies();
+	calc_E(); print_energies();
 	calc_temp(); print_temp();
 
 	avg_temp = avg_temp/c_temp;
@@ -215,7 +217,7 @@ int main(){
 
 	//  Analysis & Post-Processing
 	write_pcf(x, y, z, histo, 1);
-	write_ocf(x, y, z, ex, ey, ez, histo2, 1);*/
+	write_ocf(x, y, z, ex, ey, ez, histo2, 1);
 
 	diff = clock() - start;
 	int msec = diff*1000 / CLOCKS_PER_SEC;
@@ -455,7 +457,7 @@ void gb		(double* x, double* y, double* z,
 
 		// if(r < R + 3.0){printf("%f\n",r);}
 
-		if(r < R + 3.0 && r > R && sphere == 1){
+		if(r < R + 6.0 && sphere == 1){
 			// printf("in sphere terms\n\n");
 
 			r6 = r*r*r*r*r*r;
@@ -473,7 +475,7 @@ void gb		(double* x, double* y, double* z,
 
 			chiS = 8.0 / (9.0 + 4*R*R);
 			sigmaS = sqrt((1 + 4*R*R)/2);
-			root = sqrt(1.0 - chiS*re);
+			root = sqrt(1.0 - chiS*re*re);
 			root3 = root*root*root;
 			double sigSbyR = sigmaS/root;
 			
@@ -486,6 +488,8 @@ void gb		(double* x, double* y, double* z,
 			fxi = 72 * rhoS19 * (hx - chiS/(2*root3)*(ex[i]/r - re*hx/r));
 			fyi = 72 * rhoS19 * (hy - chiS/(2*root3)*(ey[i]/r - re*hy/r));
 			fzi = 72 * rhoS19 * (hz - chiS/(2*root3)*(ez[i]/r - re*hz/r));
+
+			//printf("%f\t%f\t%f\t%f\t\n", fx[i],fxi,r,rhoS);
 
 			//  Torque due to sphere
 			gx1 = 72 * rhoS19 * chiS*sigmaS/(2*root3) * hx;
@@ -504,7 +508,7 @@ void gb		(double* x, double* y, double* z,
 			//  Torqe due to surface anchoring
 			gx1 = gx1 - 6*W*re5/r6*hx;
 			gy1 = gy1 - 6*W*re5/r6*hy;
-			gz1 = gz1 - 6*W*re5/r6*hz; 
+			gz1 = gz1 - 6*W*re5/r6*hz;
 
 			fx[i] = fx[i] + fxi;
 			fy[i] = fy[i] + fyi;
