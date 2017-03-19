@@ -11,6 +11,14 @@
 //  Generate a random double between dMin and dMax
 	double dRand(double dMin, double dMax);
 
+//  Set information = NAN if overlap with sphere
+	void mark_particles(double* x, double* y, double* z,
+						double* vx, double* vy, double* vz,
+						double* ex, double* ey, double* ez,
+						double* ux, double* uy, double* uz,
+						double* fx, double* fy, double* fz,
+						double* gx, double* gy, double* gz);
+
 //  Newton Raphson method for finding roots
 	double newton_raphson(double ex, double ey, double ez,
 						  double ux, double uy, double uz, int i);
@@ -29,6 +37,14 @@
 
 //  Function that returns the temperature
 	double return_temp();
+
+//  Reinitialize arrays to shorter length ... after marking NAN
+	void resize(double* x, double* y, double* z,
+				 double* vx, double* vy, double* vz,
+				 double* ex, double* ey, double* ez,
+				 double* ux, double* uy, double* uz,
+				 double* fx, double* fy, double* fz,
+				 double* gx, double* gy, double* gz);
 
 //  Rescale velocities to temp_init
 	void rescale(double* x, double* y, double* z,
