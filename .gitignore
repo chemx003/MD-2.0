@@ -1,4 +1,6 @@
 **/*.dat
 **/*.log
+**/*.pdf
+**/*.png
 c-main
 
