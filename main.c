@@ -38,23 +38,23 @@
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 4096,			//  Number of particles
+int 	N				= 8192,			//  Number of particles
 		pcf_bins		= 400,			//  Number of bins for pcf
 		pcf_num_steps	= 10;			// 	Steps to avg pcf over
 
-double 	num_steps 		= 5000, 			//  Number of timesteps
+double 	num_steps 		= 10000, 			//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
 	   	temp_init 		= 1.0,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
-	   	L				= 48.1,			//  Length of simulation box
-	   	SL				= 16.1,			//	Short length of the simulation box
+	   	L				= 63.1,			//  Length of simulation box
+	   	SL				= 21.1,			//	Short length of the simulation box
 
 	   	M				= 1.0,			//	Particle mass
 	  	I				= 1.0,			//  Particle moment of inertia
 
-	  	R				= 4.0,			//  Immersed sphere radius
-	  	W				= 350000,		//  Anchoring coefficient
+	  	R				= 3.0,			//  Immersed sphere radius
+	  	W				= 175000,		//  Anchoring coefficient
 
 		KB				= 1.0,			//  Boltzmann Constant
 		PI				= 3.14159265358979; //  Pi
@@ -108,7 +108,7 @@ int main(){
 	calc_temp(); print_temp();
 	
 	//  Equilibration loop
-	for(int i = 0; i < 1000; i++) {
+	for(int i = 0; i < 5000; i++) {
 
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
@@ -116,11 +116,6 @@ int main(){
 			   gx, gy, gz, 0); 	//  Integrate the eqns of motion		
 
 		calc_E(); write_energies(i);
-
-		if(num_steps-i <= pcf_num_steps){
-			write_pcf(x, y, z, histo, 0);
-			write_ocf(x, y, z, ex, ey, ez, histo2, 0);
-		}
 
 		if(i%100 == 0) {
 			printf("EQBM: %i\n", i);
@@ -146,8 +141,9 @@ int main(){
 			}
 		}
 
-		if(i%10 == 0) {write_vectors(x, y, z, ex, ey, ez);}
-	}
+		if(i%100 == 0) {write_vectors(x, y, z, ex, ey, ez);}
+
+	}printf("Equilibriation complete");
 	
 	//  Carve away sphere
 	mark_particles(x, y, z, vx, vy, vz, 
@@ -202,7 +198,7 @@ int main(){
 			}
 		}
 
-		if(i%10 == 0) {write_vectors(x, y, z, ex, ey, ez);}
+		if(i%100 == 0) {write_vectors(x, y, z, ex, ey, ez);}
 	}
 
 

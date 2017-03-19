@@ -72,11 +72,27 @@ void mark_particles(double* x, double* y, double* z,
 					double* gx, double* gy, double* gz){
 
 	for(int i = 0; i < N; i++){
-		if(pow(x[i] - L/2.0, 2.0) + pow(y[i] - SL/2.0, 2.0) 
-				+ pow(z[i] - SL/2.0, 2.0) <= pow(R + 3.0, 2.0)){
-			x[i] = y[i] = z[i] = vx[i] = vy[i] = vz[i] = NAN;
-			ex[i] = ey[i] = ez[i] = ux[i] = uy[i] = uz[i] = NAN;
-			fx[i] = fy[i] = fz[i] = gx[i] = gy[i] = gz[i] = NAN;
+		if(pow(x[i] - L/2.0, 2.0) + pow(y[i] - SL/2.0, 2.0) + 
+				pow(z[i] - SL/2.0, 2.0) <= pow(R + 3.0, 2.0)){
+			
+			x[i] = NAN;
+			y[i] = NAN; 
+			z[i] = NAN;
+			vx[i] = NAN;
+			vy[i] = NAN;
+			vz[i] = NAN;
+			ex[i] = NAN;
+			ey[i] = NAN;
+			ez[i] = NAN; 
+			ux[i] = NAN;
+			uy[i] = NAN;
+			uz[i] = NAN;
+			fx[i] = NAN;
+			fy[i] = NAN;
+			fz[i] = NAN;
+			gx[i] = NAN;
+			gy[i] = NAN;
+			gz[i] = NAN;
 		}
 	}
 }
@@ -160,10 +176,14 @@ void resize(double* x, double* y, double* z,
 			 double* fx, double* fy, double* fz,
 			 double* gx, double* gy, double* gz){
 	int	count, newN, p; //  Count up the number NANs			
-	p=0;
+	p=0; count = 0;
+
+	printf("%i\n", N);
 
 	for(int i = 0; i < N; i++) {
-		if(isnan(x[i]) != 0){count++;}
+		if(isnan(x[i]) != 0){
+			count++;
+		}
 	}
 
 	printf("count = %i\n\n", count);
@@ -172,29 +192,29 @@ void resize(double* x, double* y, double* z,
 	newN = N - count;
 
 	//  Declare temporary arrays
-	double *tx = (double*) calloc(newN,sizeof(double));
-	double *ty = (double*) calloc(newN,sizeof(double));
-	double *tz = (double*) calloc(newN,sizeof(double));
+	double tx[newN]; // = (double*) calloc(newN,sizeof(double));
+	double ty[newN]; // = (double*) calloc(newN,sizeof(double));
+	double tz[newN]; // = (double*) calloc(newN,sizeof(double));
 
-	double *tvx = (double*) calloc(newN,sizeof(double));
-	double *tvy = (double*) calloc(newN,sizeof(double));
-	double *tvz = (double*) calloc(newN,sizeof(double));
+	double tvx[newN]; // = (double*) calloc(newN,sizeof(double));
+	double tvy[newN]; // = (double*) calloc(newN,sizeof(double));
+	double tvz[newN]; // = (double*) calloc(newN,sizeof(double));
 
-	double *tex = (double*) calloc(newN,sizeof(double));
-	double *tey = (double*) calloc(newN,sizeof(double));
-	double *tez = (double*) calloc(newN,sizeof(double));
+	double tex[newN]; //  = (double*) calloc(newN,sizeof(double));
+	double tey[newN]; //  = (double*) calloc(newN,sizeof(double));
+	double tez[newN]; //  = (double*) calloc(newN,sizeof(double));
 
-	double *tux = (double*) calloc(newN,sizeof(double));
-	double *tuy = (double*) calloc(newN,sizeof(double));
-	double *tuz = (double*) calloc(newN,sizeof(double));
+	double tux[newN]; //  = (double*) calloc(newN,sizeof(double));
+	double tuy[newN]; //  = (double*) calloc(newN,sizeof(double));
+	double tuz[newN]; //  = (double*) calloc(newN,sizeof(double));
 
-	double *tfx = (double*) calloc(newN,sizeof(double));
-	double *tfy = (double*) calloc(newN,sizeof(double));
-	double *tfz = (double*) calloc(newN,sizeof(double));
+	double tfx[newN]; //  = (double*) calloc(newN,sizeof(double));
+	double tfy[newN]; //  = (double*) calloc(newN,sizeof(double));
+	double tfz[newN]; //  = (double*) calloc(newN,sizeof(double));
 
-	double *tgx = (double*) calloc(newN,sizeof(double));
-	double *tgy = (double*) calloc(newN,sizeof(double));
-	double *tgz = (double*) calloc(newN,sizeof(double));
+	double tgx[newN]; //  = (double*) calloc(newN,sizeof(double));
+	double tgy[newN]; //  = (double*) calloc(newN,sizeof(double));
+	double tgz[newN]; //  = (double*) calloc(newN,sizeof(double));
 	
 	//  Assign values to the temporary arrays
 	for(int i = 0; i < N; i++) {
