@@ -29,6 +29,72 @@ extern double	KT, KR, K, V, E, 			//  Pot, kin, tot energies
 				T;							//  Temperature
 
 /*----------------------------------------------------------------------------*/
+//  Calculate the director field at the current timestep
+void calc_dir_field(double* x, double* y, double* z,
+				   double* ex, double* ey, double* ez,
+				   double* x_dir, double* y_dir, double* z_dir,
+				   double* ex_dir, double* ey_dir, double* ez_dir){
+	/*  NEW GLOBAL VARIABLES
+	 *  int		num_bin_x,
+	 *  		num_bin_y,
+	 *  		num_bin_z; */
+
+	double 	len_bin_x, len_bin_y, len_bin_z,
+			bin_x, bin_y, bin_z,
+			dx, dy, dz;
+
+	double q[3][3];
+		
+
+	//  Calculate bin lengths
+	len_bin_x = L / num_bin_x;
+	len_bin_y = SL / num_bin_y;
+	len_bin_z = SL / num_bin_z;
+	
+	//  Loop over all bins and particles
+	for(int i = 0; i < num_bins_x; i++) {
+		for(int j = 0; j < num_bins_y; j++) {
+			for(int k = 0; k < num_bins_z; k++) {
+				
+				//  Zero out tensor
+				q[0][0] = 0.0; q[0][1] = 0.0; q[0][2] = 0.0;
+				q[1][0] = 0.0; q[1][1] = 0.0; q[1][2] = 0.0;
+				q[2][0] = 0.0; q[2][1] = 0.0; q[2][2] = 0.0; 
+				
+				//  Center of the bin
+				bin_x = len_bin_x*(1/2 + i);
+				bin_y = len_bin_y*(1/2 + j);
+				bin_z = len_bin_z*(1/2 + k);
+
+				/*  For all bins check all particles to see
+				 *  if they are in that bin */
+				for(int  p = 0; p < N; p++){
+
+					// Calculate distance from bin center
+					dx = fabs(x[p] - bin_x);
+					dy = fabs(y[p] - bin_y);
+					dz = fabs(z[p] - bin_z);
+					
+					//  Check to see if particle is in bin
+					if(dx < len_bin_x/2 && dy < len_bin_y/2 && 
+							dz < len_bin_z/2){
+						//  Sum up Q-Tensor components
+						
+					}
+				}
+
+				//  Average Q-Tensor
+
+				//  Convert Q-Tensor to proper format
+
+				//  Call LAPACK
+
+				//  Store eigenstuff
+				
+			}
+		}
+	}
+}
 
 //  Calculate the total energy
 void calc_E(){
