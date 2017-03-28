@@ -33,7 +33,8 @@ extern double	KT, KR, K, V, E, 			//  Pot, kin, tot energies
 void calc_dir_field(double* x, double* y, double* z,
 				   double* ex, double* ey, double* ez,
 				   double* x_dir, double* y_dir, double* z_dir,
-				   double* ex_dir, double* ey_dir, double* ez_dir){
+				   double* ex_dir, double* ey_dir, double* ez_dir,
+				   double* eigenval){
 	/*  NEW GLOBAL VARIABLES
 	 *  int		num_bin_x,
 	 *  		num_bin_y,
@@ -41,14 +42,15 @@ void calc_dir_field(double* x, double* y, double* z,
 
 	double 	len_bin_x, len_bin_y, len_bin_z, //  bin dimensions
 			bin_x, bin_y, bin_z, //  center of current bin
-			n_bin, //  Number of particles in current bin
+			bin_number, //  bin number for array indexing
 			dx, dy, dz;  //Distance comp of bin center to particle
 
 	double q[3][3], qt[9], w[3], work[3]; //  q tensor and q tensor in form for lapack
 
 	char jobz, uplo; //  See documentation for dysev
 
-	int order, lda, lwork, info;
+	int order, lda, lwork, info,
+		n_bin;	//  Number of particles in bin
 
 	//  Initialize params 
 	jobz = 'V';
@@ -58,13 +60,15 @@ void calc_dir_field(double* x, double* y, double* z,
 	for(int i = 0; i < 3; i++) { w[i] = 0.0; work[i] = 0.0;}
 	lwork = 3;
 	info = 0;
+	n_bin = 0;
+	bin_number = 0;
 
 	//  Calculate bin lengths
 	len_bin_x = L / num_bin_x;
 	len_bin_y = SL / num_bin_y;
 	len_bin_z = SL / num_bin_z;
 	
-	//  Loop over all bins and particles
+	//  Loop over all bins
 	for(int i = 0; i < num_bins_x; i++) {
 		for(int j = 0; j < num_bins_y; j++) {
 			for(int k = 0; k < num_bins_z; k++) {
@@ -73,15 +77,21 @@ void calc_dir_field(double* x, double* y, double* z,
 				for(int a = 0; a < 3; a++) {
 					for(int b = 0; b < 3; b++) {
 						q[a][b] = 0.0;
+						qt[b + a*3] = 0.0;
 					}
 				}
 
-				n_bin = 0.0;
+				n_bin = 0;
 				
 				//  Center of the bin
 				bin_x = len_bin_x*(1/2 + i);
 				bin_y = len_bin_y*(1/2 + j);
 				bin_z = len_bin_z*(1/2 + k);
+
+				//  Store center of bin coords
+				x_dir[bin_number] = bin_x;
+				y_dir[bin_number] = bin_y;
+				z_dir[bin_number] = bin_z;
 
 				/*  For all bins check all particles to see
 				 *  if they are in that bin */
@@ -98,7 +108,8 @@ void calc_dir_field(double* x, double* y, double* z,
 						//  Take total number of particles in bin for avg
 						n_bin++;
 
-						//  Sum up Q-Tensor components
+						//  Sum up Q-Tensor components ... only store upper
+						//  later
 						q[0][0] += ex[p]*ex[p] - 1.0/3.0;
 						q[0][1] += ex[p]*ey[p];
 						q[0][2] += ex[p]*ez[p];
@@ -128,13 +139,24 @@ void calc_dir_field(double* x, double* y, double* z,
 				}
 
 				//  Call LAPACK
-				dysev_(&jobz, &uplo, &n, qt, &lda, w, work, &lwork, &info);
+				dysev_(&jobz, &uplo, &order, qt, &lda, w, work, &lwork, &info);
 
 				//  Store eigenstuff and position of bin?
-				
+				eigenval[bin_number] = w[2];
+				ex_dir[bin_number] = qt[6];
+				ey_dir[bin_number] = qt[7];
+				ez_dir[bin_number] = qt[8];
+
+				//  Increment bin number
+				bin_number++;
 			}
 		}
 	}
+
+	/*  Here we'll want to write out the values to a .dat file maybe make
+	 *  director stuff local to this function? */
+
+	
 }
 
 //  Calculate the total energy
