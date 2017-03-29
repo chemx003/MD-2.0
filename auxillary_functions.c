@@ -45,7 +45,7 @@ void calc_dir_field(double* x, double* y, double* z,
 			bin_number, //  bin number for array indexing
 			dx, dy, dz;  //Distance comp of bin center to particle
 
-	double q[3][3], qt[9], w[3], work[3]; //  q tensor and q tensor in form for lapack
+	double q[3][3], qt[9], w[3], work[9]; //  q tensor and q tensor in form for lapack
 
 	char jobz, uplo; //  See documentation for dysev
 
@@ -57,8 +57,9 @@ void calc_dir_field(double* x, double* y, double* z,
 	uplo = 'U';
 	order = 3;
 	lda = 3;
-	for(int i = 0; i < 3; i++) { w[i] = 0.0; work[i] = 0.0;}
-	lwork = 3;
+	for(int i = 0; i < 3; i++) {w[i] = 0.0;}
+	for(int i = 0; i < 9; i++) {work[i] = 0.0;}
+	lwork = 9;
 	info = 0;
 	n_bin = 0;
 	bin_number = 0;
