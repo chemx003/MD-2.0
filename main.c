@@ -38,26 +38,26 @@
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 8192,			//  Number of particles
+int 	N				= 4096,			//  Number of particles
 		pcf_bins		= 400,			//  Number of bins for pcf
 		pcf_num_steps	= 10,			// 	Steps to avg pcf over
 		num_bin_x 		= 10,			//  Director bins
 		num_bin_y		= 10,			
 		num_bin_z		= 10;
 
-double 	num_steps 		= 0, 		//  Number of timesteps
+double 	num_steps 		= 5000, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
 	   	temp_init 		= 1.0,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
-	   	L				= 63.1,			//  Length of simulation box
-	   	SL				= 21.1,			//	Short length of the simulation box
+	   	L				= 50.1,//63.1,			//  Length of simulation box
+	   	SL				= 19.1,//21.1,			//	Short length of the simulation box
 
 	   	M				= 1.0,			//	Particle mass
 	  	I				= 1.0,			//  Particle moment of inertia
 
 	  	R				= 3.0,			//  Immersed sphere radius
-	  	W				= 175000,		//  Anchoring coefficient
+	  	W				= 350000,		//  Anchoring coefficient
 
 		KB				= 1.0,			//  Boltzmann Constant
 		PI				= 3.14159265358979; //  Pi
@@ -108,9 +108,6 @@ int main(){
 	print_global_variables();
 
 	init(x, y, z, vx, vy, vz,ex, ey, ez, ux, uy, uz);	//  Initialize
-
-	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
-					ex_dir, ey_dir, ez_dir, eigenval);
 
 	//  Calculate the forces and torques
 	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz, 0);
@@ -215,6 +212,9 @@ int main(){
 	}
 
 
+	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
+					ex_dir, ey_dir, ez_dir, eigenval);
+
 	calc_E(); print_energies();
 	calc_temp(); print_temp();
 
@@ -224,9 +224,9 @@ int main(){
 	printf("AVG_TEMP = %f\n", avg_temp);
 	printf("AVG_SOPX = %f\n\n", avg_sop);
 
-	//  Analysis & Post-Processing
+/*	//  Analysis & Post-Processing
 	write_pcf(x, y, z, histo, 1);
-	write_ocf(x, y, z, ex, ey, ez, histo2, 1);
+	write_ocf(x, y, z, ex, ey, ez, histo2, 1); */
 
 	diff = clock() - start;
 	int msec = diff*1000 / CLOCKS_PER_SEC;
