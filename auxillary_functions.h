@@ -1,4 +1,11 @@
 /*-----------------------  Function Prototypes  ------------------------------*/
+//  Calculate the director field at the current timestep
+	void calc_dir_field(double* x, double* y, double* z,
+				   		double* ex, double* ey, double* ez,
+				   		double* x_dir, double* y_dir, double* z_dir,
+				   		double* ex_dir, double* ey_dir, double* ez_dir,
+				   		double* eigenval);
+
 //  Calculate the total energy
 	void calc_E();
 

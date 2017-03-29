@@ -6,7 +6,10 @@
 //  Simulation Parameters
 extern int 	N,								//  Number of particles
 	   		pcf_bins,						//  Number of bins for pcf
-	   		pcf_num_steps;					//  Steps to avg pcf over
+	   		pcf_num_steps,					//  Steps to avg pcf over
+	   		num_bin_x,						//  Director bins
+	   		num_bin_y,
+	   		num_bin_z;
 
 extern double 	num_steps, 					//  Number of timesteps
 				dt, 						//  Length of time step
@@ -28,6 +31,9 @@ extern double	KT, KR, K, V, E, 			//  Pot, kin, tot energies
 				P,							//  Pressure
 				T;							//  Temperature
 
+//  LAPACK FUNCTION TO DIAGONALIZE SYMMETRIC MATRIX
+extern void dsyev_(char* JOBZ, char* UPLO, int* N, double* A, int* LDA, 
+				   double* W, double* WORK, int* LWORK, int* INFO);
 /*----------------------------------------------------------------------------*/
 //  Calculate the director field at the current timestep
 void calc_dir_field(double* x, double* y, double* z,
@@ -41,15 +47,14 @@ void calc_dir_field(double* x, double* y, double* z,
 	 *  		num_bin_z; */
 
 	double 	len_bin_x, len_bin_y, len_bin_z, //  bin dimensions
-			bin_x, bin_y, bin_z, //  center of current bin
-			bin_number, //  bin number for array indexing
+			bin_x, bin_y, bin_z, //  center of current bin 
 			dx, dy, dz;  //Distance comp of bin center to particle
 
 	double q[3][3], qt[9], w[3], work[9]; //  q tensor and q tensor in form for lapack
 
 	char jobz, uplo; //  See documentation for dysev
 
-	int order, lda, lwork, info,
+	int order, lda, lwork, info, bin_number,
 		n_bin;	//  Number of particles in bin
 
 	//  Initialize params 
@@ -70,9 +75,9 @@ void calc_dir_field(double* x, double* y, double* z,
 	len_bin_z = SL / num_bin_z;
 	
 	//  Loop over all bins
-	for(int i = 0; i < num_bins_x; i++) {
-		for(int j = 0; j < num_bins_y; j++) {
-			for(int k = 0; k < num_bins_z; k++) {
+	for(int i = 0; i < num_bin_x; i++) {
+		for(int j = 0; j < num_bin_y; j++) {
+			for(int k = 0; k < num_bin_z; k++) {
 				
 				//  Zero out tensor
 				for(int a = 0; a < 3; a++) {
@@ -140,7 +145,7 @@ void calc_dir_field(double* x, double* y, double* z,
 				}
 
 				//  Call LAPACK
-				dysev_(&jobz, &uplo, &order, qt, &lda, w, work, &lwork, &info);
+				dsyev_(&jobz, &uplo, &order, qt, &lda, w, work, &lwork, &info);
 
 				//  Store eigenstuff and position of bin?
 				eigenval[bin_number] = w[2];
@@ -156,8 +161,18 @@ void calc_dir_field(double* x, double* y, double* z,
 
 	/*  Here we'll want to write out the values to a .dat file maybe make
 	 *  director stuff local to this function? */
+	FILE* o;
+	o = fopen("director.dat", "a");
 
-	
+	for(int i = 0; i < bin_number; i++){
+		fprintf(o, "%f\t%f\t%f\t%f\t%f\t%f\n", x_dir[i], y_dir[i], z_dir[i], 
+				ex_dir[i], ey_dir[i], ez_dir[i]);
+	}
+
+	//  Need extra lines for gnuplot to recognize blocks	
+	fprintf(o, "\n\n");
+
+	fclose(o);
 }
 
 //  Calculate the total energy
@@ -192,9 +207,6 @@ double dRand(double dMin, double dMax){
 	double d = (double) rand() / RAND_MAX;
 	return dMin + d * (dMax - dMin);
 }
-
-extern void dysev_(char* JOBZ, char* UPLO, int* N, double* A, int* LDA, 
-				   double* W, double* WORK, int* LWORK, int* INFO);
 
 //  Set information = NAN if overlap with sphere
 void mark_particles(double* x, double* y, double* z,

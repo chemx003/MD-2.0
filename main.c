@@ -40,9 +40,12 @@
 //  Simulation Parameters
 int 	N				= 8192,			//  Number of particles
 		pcf_bins		= 400,			//  Number of bins for pcf
-		pcf_num_steps	= 10;			// 	Steps to avg pcf over
+		pcf_num_steps	= 10,			// 	Steps to avg pcf over
+		num_bin_x 		= 10,			//  Director bins
+		num_bin_y		= 10,			
+		num_bin_z		= 10;
 
-double 	num_steps 		= 10000, 			//  Number of timesteps
+double 	num_steps 		= 0, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
 	   	temp_init 		= 1.0,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
@@ -74,15 +77,22 @@ int main(){
 	
 	//  Local variables
 	double 	x[N], y[N], z[N], 				//  Particle coords at n
+			x_dir[num_bin_x*num_bin_y*num_bin_z],
+			y_dir[num_bin_x*num_bin_y*num_bin_z],
+			z_dir[num_bin_x*num_bin_y*num_bin_z],
 			vx[N], vy[N], vz[N],			//	Particle coords at n-1
 
 			ex[N], ey[N], ez[N],			//  Particle orient at n
+			ex_dir[num_bin_x*num_bin_y*num_bin_z],
+			ey_dir[num_bin_x*num_bin_y*num_bin_z],
+			ez_dir[num_bin_x*num_bin_y*num_bin_z],	
 			ux[N], uy[N], uz[N],			//  Particle orient at n-1
 
 			fx[N], fy[N], fz[N],			//  Forces
 			gx[N], gy[N], gz[N],			//  Gorques
 			histo[pcf_bins][2],				//  Histogram for pcf
 			histo2[pcf_bins][2],			//  Histogram for ocf
+			eigenval[num_bin_x*num_bin_y*num_bin_z],
 			avg_temp, avg_sop;				//  Holders for avgs
 
 
@@ -99,6 +109,9 @@ int main(){
 
 	init(x, y, z, vx, vy, vz,ex, ey, ez, ux, uy, uz);	//  Initialize
 
+	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
+					ex_dir, ey_dir, ez_dir, eigenval);
+
 	//  Calculate the forces and torques
 	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz, 0);
 
@@ -108,7 +121,7 @@ int main(){
 	calc_temp(); print_temp();
 	
 	//  Equilibration loop
-	for(int i = 0; i < 5000; i++) {
+	for(int i = 0; i < 1000; i++) {
 
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
