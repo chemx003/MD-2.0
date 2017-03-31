@@ -56,7 +56,7 @@ double 	num_steps 		= 5000, 		//  Number of timesteps
 	   	M				= 1.0,			//	Particle mass
 	  	I				= 1.0,			//  Particle moment of inertia
 
-	  	R				= 3.0,			//  Immersed sphere radius
+	  	R				= 6.0,			//  Immersed sphere radius
 	  	W				= 350000,		//  Anchoring coefficient
 
 		KB				= 1.0,			//  Boltzmann Constant
@@ -118,7 +118,7 @@ int main(){
 	calc_temp(); print_temp();
 	
 	//  Equilibration loop
-	for(int i = 0; i < 1000; i++) {
+	for(int i = 0; i < 5000; i++) {
 
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
@@ -224,9 +224,9 @@ int main(){
 	printf("AVG_TEMP = %f\n", avg_temp);
 	printf("AVG_SOPX = %f\n\n", avg_sop);
 
-/*	//  Analysis & Post-Processing
+	//  Analysis & Post-Processing
 	write_pcf(x, y, z, histo, 1);
-	write_ocf(x, y, z, ex, ey, ez, histo2, 1); */
+	write_ocf(x, y, z, ex, ey, ez, histo2, 1); 
 
 	diff = clock() - start;
 	int msec = diff*1000 / CLOCKS_PER_SEC;
