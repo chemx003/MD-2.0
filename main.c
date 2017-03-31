@@ -109,6 +109,9 @@ int main(){
 
 	init(x, y, z, vx, vy, vz,ex, ey, ez, ux, uy, uz);	//  Initialize
 
+	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
+					ex_dir, ey_dir, ez_dir, eigenval);
+
 	//  Calculate the forces and torques
 	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz, 0);
 
@@ -211,9 +214,6 @@ int main(){
 		if(i%100 == 0) {write_vectors(x, y, z, ex, ey, ez);}
 	}
 
-
-	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
-					ex_dir, ey_dir, ez_dir, eigenval);
 
 	calc_E(); print_energies();
 	calc_temp(); print_temp();
