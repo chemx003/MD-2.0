@@ -38,26 +38,26 @@
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 4096,			//  Number of particles
+int 	N				= 8192,			//  Number of particles
 		pcf_bins		= 400,			//  Number of bins for pcf
-		pcf_num_steps	= 10,			// 	Steps to avg pcf over
-		num_bin_x 		= 6,			//  Director bins
-		num_bin_y		= 6,			
-		num_bin_z		= 6;
+		pcf_num_steps	= 25,			// 	Steps to avg pcf over
+		num_bin_x 		= 10,			//  Director bins
+		num_bin_y		= 10,			
+		num_bin_z		= 10;
 
-double 	num_steps 		= 5000, 		//  Number of timesteps
+double 	num_steps 		= 75000, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
 	   	temp_init 		= 1.0,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
-	   	L				= 50.1,//63.1,			//  Length of simulation box
-	   	SL				= 19.1,//21.1,			//	Short length of the simulation box
+	   	L				= 63.1,			//  Length of simulation box
+	   	SL				= 21.1,			//	Short length of the simulation box
 
 	   	M				= 1.0,			//	Particle mass
 	  	I				= 1.0,			//  Particle moment of inertia
 
 	  	R				= 6.0,			//  Immersed sphere radius
-	  	W				= 350000,		//  Anchoring coefficient
+	  	W				= 35000,		//  Anchoring coefficient
 
 		KB				= 1.0,			//  Boltzmann Constant
 		PI				= 3.14159265358979; //  Pi
@@ -118,7 +118,7 @@ int main(){
 	calc_temp(); print_temp();
 	
 	//  Equilibration loop
-	for(int i = 0; i < 1000; i++) {
+	for(int i = 0; i < 25000; i++) {
 
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
@@ -141,22 +141,9 @@ int main(){
 		write_sop(ex, ey, ez, i);
 		write_temp(i);
 
-		if(i>30000){
-			avg_temp = avg_temp + return_temp();
-			c_temp++;
-
-			if(fabs(return_sopx(ex))<3.0){
-				avg_sop = avg_sop + return_sopx(ex);
-				c_sop++;
-			}
-		}
-
 		if(i%100 == 0) {write_vectors(x, y, z, ex, ey, ez);}
 
 	}printf("Equilibriation complete");
-
-	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
-					ex_dir, ey_dir, ez_dir, eigenval);
 	
 	//  Carve away sphere
 	mark_particles(x, y, z, vx, vy, vz, 
