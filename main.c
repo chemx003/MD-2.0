@@ -41,9 +41,9 @@
 int 	N				= 4096,			//  Number of particles
 		pcf_bins		= 400,			//  Number of bins for pcf
 		pcf_num_steps	= 10,			// 	Steps to avg pcf over
-		num_bin_x 		= 10,			//  Director bins
-		num_bin_y		= 10,			
-		num_bin_z		= 10;
+		num_bin_x 		= 6,			//  Director bins
+		num_bin_y		= 6,			
+		num_bin_z		= 6;
 
 double 	num_steps 		= 5000, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
@@ -109,9 +109,6 @@ int main(){
 
 	init(x, y, z, vx, vy, vz,ex, ey, ez, ux, uy, uz);	//  Initialize
 
-	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
-					ex_dir, ey_dir, ez_dir, eigenval);
-
 	//  Calculate the forces and torques
 	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz, 0);
 
@@ -121,7 +118,7 @@ int main(){
 	calc_temp(); print_temp();
 	
 	//  Equilibration loop
-	for(int i = 0; i < 5000; i++) {
+	for(int i = 0; i < 1000; i++) {
 
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
@@ -157,6 +154,9 @@ int main(){
 		if(i%100 == 0) {write_vectors(x, y, z, ex, ey, ez);}
 
 	}printf("Equilibriation complete");
+
+	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
+					ex_dir, ey_dir, ez_dir, eigenval);
 	
 	//  Carve away sphere
 	mark_particles(x, y, z, vx, vy, vz, 

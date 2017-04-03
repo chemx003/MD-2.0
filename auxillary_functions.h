@@ -18,6 +18,9 @@
 //  Generate a random double between dMin and dMax
 	double dRand(double dMin, double dMax);
 
+//  Returns the length of a vector
+	double mag_vec(double x, double y, double z);
+
 //  Set information = NAN if overlap with sphere
 	void mark_particles(double* x, double* y, double* z,
 						double* vx, double* vy, double* vz,
@@ -78,7 +81,7 @@
 					double ex, double ey, double ez);
 
 //  Wrtie the temperature to a file
-	double write_temp(double time);
+	void write_temp(double time);
 
 //  Write the positions and orientations to a file
 	void write_vectors(double* x, double* y, double* z,

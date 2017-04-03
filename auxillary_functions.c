@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "auxillary_functions.h"
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
@@ -149,9 +150,16 @@ void calc_dir_field(double* x, double* y, double* z,
 
 				//  Store eigenstuff and position of bin?
 				eigenval[bin_number] = w[2];
-				ex_dir[bin_number] = qt[6];
-				ey_dir[bin_number] = qt[7];
-				ez_dir[bin_number] = qt[8];
+				
+				//double mag = sqrt(qt[6]*qt[6] + qt[7]*qt[7] + qt[8]*qt[8]);
+
+				ex_dir[bin_number] = qt[6];///mag;
+				ey_dir[bin_number] = qt[7];///mag;
+				ez_dir[bin_number] = qt[8];///mag;
+
+				ex_dir[bin_number] = ex_dir[bin_number]/mag_vec(ex_dir[bin_number], ey_dir[bin_number], ez_dir[bin_number]);
+				ey_dir[bin_number] = ey_dir[bin_number]/mag_vec(ex_dir[bin_number], ey_dir[bin_number], ez_dir[bin_number]);
+				ez_dir[bin_number] = ez_dir[bin_number]/mag_vec(ex_dir[bin_number], ey_dir[bin_number], ez_dir[bin_number]);
 
 				//  Increment bin number
 				bin_number++;
@@ -164,9 +172,21 @@ void calc_dir_field(double* x, double* y, double* z,
 	FILE* o;
 	o = fopen("director.dat", "a");
 
+	double mid_z = floor(num_bin_z/2) * len_bin_z;
+
+	printf("mid_z=%f\n\n", mid_z);
+
 	for(int i = 0; i < bin_number; i++){
-		fprintf(o, "%f\t%f\t%f\t%f\t%f\t%f\n", x_dir[i], y_dir[i], z_dir[i], 
-				ex_dir[i], ey_dir[i], ez_dir[i]);
+		if(abs(z_dir[i] - mid_z) <= 0.1 && isnan(ex_dir[i]) == 0){
+			double mag = mag_vec(ex_dir[i], ey_dir[i], ez_dir[i]);
+			ex_dir[i] = ex_dir[i]/mag;
+			ey_dir[i] = ey_dir[i]/mag;
+			ez_dir[i] = ez_dir[i]/mag;
+			printf("length before = %f\n", mag);
+			mag = mag_vec(ex_dir[i], ey_dir[i], ez_dir[i]);
+			printf("length after = %f\n", mag);
+			fprintf(o, "%f    %f    %f    %f    %f    %f\n", x_dir[i], y_dir[i], z_dir[i], ex_dir[i], ey_dir[i], ez_dir[i]);
+		}
 	}
 
 	//  Need extra lines for gnuplot to recognize blocks	
@@ -206,6 +226,15 @@ int check_unit_length(double* x, double* y, double* z){
 double dRand(double dMin, double dMax){
 	double d = (double) rand() / RAND_MAX;
 	return dMin + d * (dMax - dMin);
+}
+
+//Returns the length of a vector
+double mag_vec(double x, double y, double z){
+	double magn;
+
+	magn = sqrt(x*x + y*y + z*z);
+
+	return magn;
 }
 
 //  Set information = NAN if overlap with sphere
