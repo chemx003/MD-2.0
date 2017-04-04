@@ -41,7 +41,7 @@ void calc_dir_field(double* x, double* y, double* z,
 				   double* ex, double* ey, double* ez,
 				   double* x_dir, double* y_dir, double* z_dir,
 				   double* ex_dir, double* ey_dir, double* ez_dir,
-				   double* eigenval){
+				   double* eigenval, double q[][3][4], int avg){
 	/*  NEW GLOBAL VARIABLES
 	 *  int		num_bin_x,
 	 *  		num_bin_y,
@@ -51,7 +51,8 @@ void calc_dir_field(double* x, double* y, double* z,
 			bin_x, bin_y, bin_z, //  center of current bin 
 			dx, dy, dz;  //Distance comp of bin center to particle
 
-	double q[3][3], qt[9], w[3], work[9]; //  q tensor and q tensor in form for lapack
+	double //q[num_bin_x*num_bin_y*num_bin_z][3][4], 
+		   qt[9], w[3], work[9]; //  q tensor and q tensor in form for lapack
 
 	char jobz, uplo; //  See documentation for dysev
 
@@ -80,86 +81,84 @@ void calc_dir_field(double* x, double* y, double* z,
 		for(int j = 0; j < num_bin_y; j++) {
 			for(int k = 0; k < num_bin_z; k++) {
 				
-				//  Zero out tensor
-				for(int a = 0; a < 3; a++) {
-					for(int b = 0; b < 3; b++) {
-						q[a][b] = 0.0;
-						qt[b + a*3] = 0.0;
+				if(avg == 0){
+					//  Center of the bin
+					bin_x = len_bin_x*(1/2 + i);
+					bin_y = len_bin_y*(1/2 + j);
+					bin_z = len_bin_z*(1/2 + k);
+
+					//  Store center of bin coords
+					x_dir[bin_number] = bin_x;
+					y_dir[bin_number] = bin_y;
+					z_dir[bin_number] = bin_z;
+
+					/*  For all bins check all particles to see
+					 *  if they are in that bin */
+					for(int  p = 0; p < N; p++) {
+
+						// Calculate distance from bin center
+						dx = fabs(x[p] - bin_x);
+						dy = fabs(y[p] - bin_y);
+						dz = fabs(z[p] - bin_z);
+						
+						//  Check to see if particle is in bin
+						if(dx < len_bin_x/2 && dy < len_bin_y/2 && 
+								dz < len_bin_z/2){
+							//  Take total number of particles in bin for avg
+							q[bin_number][0][3]++;
+
+							//  Sum up Q-Tensor components ... only store upper
+							//  later
+							q[bin_number][0][0] += ex[p]*ex[p] - 1.0/3.0;
+							q[bin_number][0][1] += ex[p]*ey[p];
+							q[bin_number][0][2] += ex[p]*ez[p];
+
+							q[bin_number][1][0] += ey[p]*ex[p];
+							q[bin_number][1][1] += ey[p]*ey[p] - 1.0/3.0;
+							q[bin_number][1][2] += ey[p]*ez[p];
+
+							q[bin_number][2][0] += ez[p]*ex[p];
+							q[bin_number][2][1] += ez[p]*ey[p];
+							q[bin_number][2][2] += ez[p]*ez[p] - 1.0/3.0;
+						}
 					}
 				}
 
-				n_bin = 0;
-				
-				//  Center of the bin
-				bin_x = len_bin_x*(1/2 + i);
-				bin_y = len_bin_y*(1/2 + j);
-				bin_z = len_bin_z*(1/2 + k);
+				if(avg==1){
+					//  Average Q-Tensor
+					for(int a = 0; a < 3; a++) {
+						for(int b = 0; b < 3; b++) {
+							q[bin_number][a][b] = q[bin_number][a][b]
+												/ q[bin_number][0][3];
+						}
+					}
 
-				//  Store center of bin coords
-				x_dir[bin_number] = bin_x;
-				y_dir[bin_number] = bin_y;
-				z_dir[bin_number] = bin_z;
+					//  Convert Q-Tensor to proper format
+					for(int a = 0; a < 3; a++) {
+						for(int b = 0; b < 3; b++) {
+							qt[b + 3*a] = q[bin_number][b][a];
+						}
+					}
 
-				/*  For all bins check all particles to see
-				 *  if they are in that bin */
-				for(int  p = 0; p < N; p++) {
+					//  Call LAPACK
+					dsyev_(&jobz, &uplo, &order, qt, &lda, w, work, &lwork, &info);
 
-					// Calculate distance from bin center
-					dx = fabs(x[p] - bin_x);
-					dy = fabs(y[p] - bin_y);
-					dz = fabs(z[p] - bin_z);
+					//  Store eigenstuff and position of bin?
+					eigenval[bin_number] = w[2];
 					
-					//  Check to see if particle is in bin
-					if(dx < len_bin_x/2 && dy < len_bin_y/2 && 
-							dz < len_bin_z/2){
-						//  Take total number of particles in bin for avg
-						n_bin++;
+					//double mag = sqrt(qt[6]*qt[6] + qt[7]*qt[7] + qt[8]*qt[8]);
 
-						//  Sum up Q-Tensor components ... only store upper
-						//  later
-						q[0][0] += ex[p]*ex[p] - 1.0/3.0;
-						q[0][1] += ex[p]*ey[p];
-						q[0][2] += ex[p]*ez[p];
+					ex_dir[bin_number] = qt[6];///mag;
+					ey_dir[bin_number] = qt[7];///mag;
+					ez_dir[bin_number] = qt[8];///mag;
 
-						q[1][0] += ey[p]*ex[p];
-						q[1][1] += ey[p]*ey[p] - 1.0/3.0;
-						q[1][2] += ey[p]*ez[p];
-
-						q[2][0] += ez[p]*ex[p];
-						q[2][1] += ez[p]*ey[p];
-						q[2][2] += ez[p]*ez[p] - 1.0/3.0;
-					}
-				}
-
-				//  Average Q-Tensor
-				for(int a = 0; a < 3; a++) {
-					for(int b = 0; b < 3; b++) {
-						q[a][b] = q[a][b] / n_bin;
-					}
-				}
-
-				//  Convert Q-Tensor to proper format
-				for(int a = 0; a < 3; a++) {
-					for(int b = 0; b < 3; b++) {
-						qt[b + 3*a] = q[b][a];
-					}
-				}
-
-				//  Call LAPACK
-				dsyev_(&jobz, &uplo, &order, qt, &lda, w, work, &lwork, &info);
-
-				//  Store eigenstuff and position of bin?
-				eigenval[bin_number] = w[2];
-				
-				//double mag = sqrt(qt[6]*qt[6] + qt[7]*qt[7] + qt[8]*qt[8]);
-
-				ex_dir[bin_number] = qt[6];///mag;
-				ey_dir[bin_number] = qt[7];///mag;
-				ez_dir[bin_number] = qt[8];///mag;
-
-				ex_dir[bin_number] = ex_dir[bin_number]/mag_vec(ex_dir[bin_number], ey_dir[bin_number], ez_dir[bin_number]);
-				ey_dir[bin_number] = ey_dir[bin_number]/mag_vec(ex_dir[bin_number], ey_dir[bin_number], ez_dir[bin_number]);
-				ez_dir[bin_number] = ez_dir[bin_number]/mag_vec(ex_dir[bin_number], ey_dir[bin_number], ez_dir[bin_number]);
+					ex_dir[bin_number] = ex_dir[bin_number]
+						/mag_vec(ex_dir[bin_number], ey_dir[bin_number], ez_dir[bin_number]);
+					ey_dir[bin_number] = ey_dir[bin_number]
+						/mag_vec(ex_dir[bin_number], ey_dir[bin_number], ez_dir[bin_number]);
+					ez_dir[bin_number] = ez_dir[bin_number]
+						/mag_vec(ex_dir[bin_number], ey_dir[bin_number], ez_dir[bin_number]);
+				}	
 
 				//  Increment bin number
 				bin_number++;
@@ -167,32 +166,34 @@ void calc_dir_field(double* x, double* y, double* z,
 		}
 	}
 
-	/*  Here we'll want to write out the values to a .dat file maybe make
-	 *  director stuff local to this function? */
-	FILE* o;
-	o = fopen("director.dat", "a");
+	if(avg==1){
+		/*  Here we'll want to write out the values to a .dat file maybe make
+		 *  director stuff local to this function? */
+		FILE* o;
+		o = fopen("director.dat", "a");
 
-	double mid_z = floor(num_bin_z/2) * len_bin_z;
+		double mid_z = floor(num_bin_z/2) * len_bin_z;
 
-	printf("mid_z=%f\n\n", mid_z);
+		printf("mid_z=%f\n\n", mid_z);
 
-	for(int i = 0; i < bin_number; i++){
-		if(abs(z_dir[i] - mid_z) <= 0.1 && isnan(ex_dir[i]) == 0){
-			double mag = mag_vec(ex_dir[i], ey_dir[i], ez_dir[i]);
-			ex_dir[i] = ex_dir[i]/mag;
-			ey_dir[i] = ey_dir[i]/mag;
-			ez_dir[i] = ez_dir[i]/mag;
-			printf("length before = %f\n", mag);
-			mag = mag_vec(ex_dir[i], ey_dir[i], ez_dir[i]);
-			printf("length after = %f\n", mag);
-			fprintf(o, "%f    %f    %f    %f    %f    %f\n", x_dir[i], y_dir[i], z_dir[i], ex_dir[i], ey_dir[i], ez_dir[i]);
+		for(int i = 0; i < bin_number; i++){
+			if(abs(z_dir[i] - mid_z) <= 0.1 && isnan(ex_dir[i]) == 0){
+				double mag = mag_vec(ex_dir[i], ey_dir[i], ez_dir[i]);
+				ex_dir[i] = ex_dir[i]/mag;
+				ey_dir[i] = ey_dir[i]/mag;
+				ez_dir[i] = ez_dir[i]/mag;
+				printf("length before = %f\n", mag);
+				mag = mag_vec(ex_dir[i], ey_dir[i], ez_dir[i]);
+				printf("length after = %f\n", mag);
+				fprintf(o, "%f    %f    %f    %f    %f    %f\n", x_dir[i], y_dir[i], z_dir[i], ex_dir[i], ey_dir[i], ez_dir[i]);
+			}
 		}
+
+		//  Need extra lines for gnuplot to recognize blocks	
+		fprintf(o, "\n\n");
+
+		fclose(o);
 	}
-
-	//  Need extra lines for gnuplot to recognize blocks	
-	fprintf(o, "\n\n");
-
-	fclose(o);
 }
 
 //  Calculate the total energy

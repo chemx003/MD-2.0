@@ -38,25 +38,25 @@
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 4096,			//  Number of particles
+int 	N				= 4086,			//  Number of particles
 		pcf_bins		= 400,			//  Number of bins for pcf
 		pcf_num_steps	= 10,			// 	Steps to avg pcf over
-		num_bin_x 		= 6,			//  Director bins
-		num_bin_y		= 6,			
-		num_bin_z		= 6;
+		num_bin_x 		= 10,			//  Director bins
+		num_bin_y		= 10,			
+		num_bin_z		= 10;
 
 double 	num_steps 		= 5000, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
 	   	temp_init 		= 1.0,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
-	   	L				= 50.1,//63.1,			//  Length of simulation box
-	   	SL				= 19.1,//21.1,			//	Short length of the simulation box
+	   	L				= 49.1,//63.1,			//  Length of simulation box
+	   	SL				= 17.1,//21.1,			//	Short length of the simulation box
 
 	   	M				= 1.0,			//	Particle mass
 	  	I				= 1.0,			//  Particle moment of inertia
 
-	  	R				= 6.0,			//  Immersed sphere radius
+	  	R				= 3.0,			//  Immersed sphere radius
 	  	W				= 350000,		//  Anchoring coefficient
 
 		KB				= 1.0,			//  Boltzmann Constant
@@ -95,6 +95,7 @@ int main(){
 			eigenval[num_bin_x*num_bin_y*num_bin_z],
 			avg_temp, avg_sop;				//  Holders for avgs
 
+	double q[num_bin_x*num_bin_y*num_bin_z][3][4];
 
 	int		c_temp, c_sop;					//  Counters for avgs
 
@@ -118,7 +119,7 @@ int main(){
 	calc_temp(); print_temp();
 	
 	//  Equilibration loop
-	for(int i = 0; i < 1000; i++) {
+	for(int i = 0; i < 2000; i++) {
 
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
@@ -151,12 +152,11 @@ int main(){
 			}
 		}
 
-		if(i%100 == 0) {write_vectors(x, y, z, ex, ey, ez);}
+		if(i%100 == 0){
+			write_vectors(x, y, z, ex, ey, ez);
+		}
 
 	}printf("Equilibriation complete");
-
-	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
-					ex_dir, ey_dir, ez_dir, eigenval);
 	
 	//  Carve away sphere
 	mark_particles(x, y, z, vx, vy, vz, 
@@ -211,10 +211,16 @@ int main(){
 			}
 		}
 
-		if(i%100 == 0) {write_vectors(x, y, z, ex, ey, ez);}
+		if(i%100 == 0) {
+			write_vectors(x, y, z, ex, ey, ez);
+			calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
+					ex_dir, ey_dir, ez_dir, eigenval, q, 0);
+		}
 	}
 
-
+	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
+					ex_dir, ey_dir, ez_dir, eigenval, q, 1);
+/*
 	calc_E(); print_energies();
 	calc_temp(); print_temp();
 
@@ -230,7 +236,7 @@ int main(){
 
 	diff = clock() - start;
 	int msec = diff*1000 / CLOCKS_PER_SEC;
-	printf("Time taken %d seconds %d milliseconds\n\n", msec/1000, msec%1000);
+	printf("Time taken %d seconds %d milliseconds\n\n", msec/1000, msec%1000);*/
 }
 
 //  Gay-Berne: Calulate the forces and torques
