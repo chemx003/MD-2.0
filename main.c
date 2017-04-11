@@ -38,16 +38,16 @@
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 4086,			//  Number of particles
+int 	N				= 4096,			//  Number of particles
 		pcf_bins		= 400,			//  Number of bins for pcf
 		pcf_num_steps	= 10,			// 	Steps to avg pcf over
-		num_bin_x 		= 10,			//  Director bins
-		num_bin_y		= 10,			
-		num_bin_z		= 10;
+		num_bin_x 		= 15,			//  Director bins
+		num_bin_y		= 15,			
+		num_bin_z		= 15;
 
 double 	num_steps 		= 5000, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
-	   	temp_init 		= 1.0,			//  Initial temperature
+	   	temp_init 		= 0.6,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
 	   	L				= 49.1,//63.1,			//  Length of simulation box
@@ -119,7 +119,7 @@ int main(){
 	calc_temp(); print_temp();
 	
 	//  Equilibration loop
-	for(int i = 0; i < 2000; i++) {
+	for(int i = 0; i < 500; i++) {
 
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
@@ -154,9 +154,16 @@ int main(){
 
 		if(i%100 == 0){
 			write_vectors(x, y, z, ex, ey, ez);
+			if(i>=200){
+				calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
+						ex_dir, ey_dir, ez_dir, eigenval, q, 0);
+			}
 		}
 
 	}printf("Equilibriation complete");
+
+	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
+					ex_dir, ey_dir, ez_dir, eigenval, q, 1);
 	
 	//  Carve away sphere
 	mark_particles(x, y, z, vx, vy, vz, 
@@ -213,14 +220,9 @@ int main(){
 
 		if(i%100 == 0) {
 			write_vectors(x, y, z, ex, ey, ez);
-			calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
-					ex_dir, ey_dir, ez_dir, eigenval, q, 0);
 		}
 	}
 
-	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
-					ex_dir, ey_dir, ez_dir, eigenval, q, 1);
-/*
 	calc_E(); print_energies();
 	calc_temp(); print_temp();
 
@@ -236,7 +238,7 @@ int main(){
 
 	diff = clock() - start;
 	int msec = diff*1000 / CLOCKS_PER_SEC;
-	printf("Time taken %d seconds %d milliseconds\n\n", msec/1000, msec%1000);*/
+	printf("Time taken %d seconds %d milliseconds\n\n", msec/1000, msec%1000);
 }
 
 //  Gay-Berne: Calulate the forces and torques
@@ -532,6 +534,8 @@ void gb		(double* x, double* y, double* z,
 			gx[i] = gx[i] - gx1;
 			gy[i] = gy[i] - gy1;
 			gz[i] = gz[i] - gz1;
+
+			V = V + 4*rhoS18 - W*re/6;
 		}
 	}
 

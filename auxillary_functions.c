@@ -83,9 +83,9 @@ void calc_dir_field(double* x, double* y, double* z,
 				
 				if(avg == 0){
 					//  Center of the bin
-					bin_x = len_bin_x*(1/2 + i);
-					bin_y = len_bin_y*(1/2 + j);
-					bin_z = len_bin_z*(1/2 + k);
+					bin_x = len_bin_x*(0.5 + i);
+					bin_y = len_bin_y*(0.5 + j);
+					bin_z = len_bin_z*(0.5 + k);
 
 					//  Store center of bin coords
 					x_dir[bin_number] = bin_x;
@@ -172,12 +172,12 @@ void calc_dir_field(double* x, double* y, double* z,
 		FILE* o;
 		o = fopen("director.dat", "a");
 
-		double mid_z = floor(num_bin_z/2) * len_bin_z;
+		double mid_z = (floor(num_bin_z/2) + 0.5) * len_bin_z;
 
 		printf("mid_z=%f\n\n", mid_z);
 
 		for(int i = 0; i < bin_number; i++){
-			if(abs(z_dir[i] - mid_z) <= 0.1 && isnan(ex_dir[i]) == 0){
+			if(fabs(z_dir[i] - mid_z) == 0 && isnan(ex_dir[i]) == 0){
 				double mag = mag_vec(ex_dir[i], ey_dir[i], ez_dir[i]);
 				ex_dir[i] = ex_dir[i]/mag;
 				ey_dir[i] = ey_dir[i]/mag;
@@ -185,7 +185,7 @@ void calc_dir_field(double* x, double* y, double* z,
 				printf("length before = %f\n", mag);
 				mag = mag_vec(ex_dir[i], ey_dir[i], ez_dir[i]);
 				printf("length after = %f\n", mag);
-				fprintf(o, "%f    %f    %f    %f    %f    %f\n", x_dir[i], y_dir[i], z_dir[i], ex_dir[i], ey_dir[i], ez_dir[i]);
+				fprintf(o, "%f    %f    %f    %f\n", x_dir[i], y_dir[i], ex_dir[i], ey_dir[i]);
 			}
 		}
 
