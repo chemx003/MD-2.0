@@ -38,14 +38,14 @@
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 4096,			//  Number of particles
+int 	N				= 100,			//  Number of particles
 		pcf_bins		= 400,			//  Number of bins for pcf
 		pcf_num_steps	= 10,			// 	Steps to avg pcf over
 		num_bin_x 		= 15,			//  Director bins
 		num_bin_y		= 15,			
 		num_bin_z		= 15;
 
-double 	num_steps 		= 5000, 		//  Number of timesteps
+double 	num_steps 		= 0, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
 	   	temp_init 		= 0.6,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
@@ -57,7 +57,7 @@ double 	num_steps 		= 5000, 		//  Number of timesteps
 	  	I				= 1.0,			//  Particle moment of inertia
 
 	  	R				= 3.0,			//  Immersed sphere radius
-	  	W				= 350000,		//  Anchoring coefficient
+	  	W				= 35000,		//  Anchoring coefficient
 
 		KB				= 1.0,			//  Boltzmann Constant
 		PI				= 3.14159265358979; //  Pi
@@ -154,16 +154,16 @@ int main(){
 
 		if(i%100 == 0){
 			write_vectors(x, y, z, ex, ey, ez);
-			if(i>=200){
+		/*	if(i>=200){
 				calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
 						ex_dir, ey_dir, ez_dir, eigenval, q, 0);
-			}
+			} */
 		}
 
 	}printf("Equilibriation complete");
 
-	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
-					ex_dir, ey_dir, ez_dir, eigenval, q, 1);
+	/*calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
+					ex_dir, ey_dir, ez_dir, eigenval, q, 1);*/
 	
 	//  Carve away sphere
 	mark_particles(x, y, z, vx, vy, vz, 
@@ -220,8 +220,15 @@ int main(){
 
 		if(i%100 == 0) {
 			write_vectors(x, y, z, ex, ey, ez);
+				if(i>=200){
+					calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
+						ex_dir, ey_dir, ez_dir, eigenval, q, 0);
+			} 
 		}
 	}
+
+	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
+					ex_dir, ey_dir, ez_dir, eigenval, q, 1);
 
 	calc_E(); print_energies();
 	calc_temp(); print_temp();

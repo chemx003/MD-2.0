@@ -144,7 +144,8 @@ void calc_dir_field(double* x, double* y, double* z,
 					dsyev_(&jobz, &uplo, &order, qt, &lda, w, work, &lwork, &info);
 
 					//  Store eigenstuff and position of bin?
-					eigenval[bin_number] = w[2];
+					eigenval[bin_number] = pow(w[0]*w[1]*w[2], 2)
+						/pow(w[0]*w[0]+w[1]*w[1]+w[2]*w[2], 3) - 1.0/54;
 					
 					//double mag = sqrt(qt[6]*qt[6] + qt[7]*qt[7] + qt[8]*qt[8]);
 
@@ -169,8 +170,9 @@ void calc_dir_field(double* x, double* y, double* z,
 	if(avg==1){
 		/*  Here we'll want to write out the values to a .dat file maybe make
 		 *  director stuff local to this function? */
-		FILE* o;
+		FILE *o, *p;
 		o = fopen("director.dat", "a");
+		p = fopen("biaxial.dat", "a");
 
 		double mid_z = (floor(num_bin_z/2) + 0.5) * len_bin_z;
 
@@ -186,13 +188,16 @@ void calc_dir_field(double* x, double* y, double* z,
 				mag = mag_vec(ex_dir[i], ey_dir[i], ez_dir[i]);
 				printf("length after = %f\n", mag);
 				fprintf(o, "%f    %f    %f    %f\n", x_dir[i], y_dir[i], ex_dir[i], ey_dir[i]);
+				fprintf(p, "%f    %f    %f\n", x_dir[i], y_dir[i], eigenval[i]);
 			}
 		}
 
 		//  Need extra lines for gnuplot to recognize blocks	
 		fprintf(o, "\n\n");
+		fprintf(p, "\n\n");
 
 		fclose(o);
+		fclose(p);
 	}
 }
 

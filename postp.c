@@ -6,7 +6,7 @@
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int		N = 4096;
+int		N = 100;
 
 /*----------------------------------------------------------------------------*/
 
@@ -21,23 +21,31 @@ int main(){
 	FILE* r;
 	r = fopen("./vector.dat", "r");
 
-	for(int i=0; i < N; i++){
-		if(feof(r) == 0){
-			fscanf(r,"%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", &x[i], &y[i], &z[i], 
-					&ex[i], &ey[i], &ez[i]); 
-		}
-	}
-
-	fclose(r);
-
 	//  Write to another file for test
 	FILE* o;
 	o = fopen("./test_vector.dat", "a");
 
-	for(int i = 0; i < N; i++){
-		fprintf(o, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", x[i], y[i], z[i], 
-				ex[i], ey[i], ez[i]); 
+
+	while(feof(r)==0) {
+
+		//  Read data in from vector.dat
+		for(int i=0; i < N; i++) {
+			if(feof(r) == 0){
+				fscanf(r,"%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", &x[i], &y[i], &z[i], 
+						&ex[i], &ey[i], &ez[i]); 
+			}
+		}
+
+		//  Write data out to test_vector.dat
+		for(int i = 0; i < N; i++){
+				fprintf(o, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%i\n", x[i], y[i], z[i], 
+						ex[i], ey[i], ez[i], i); 
+		}
+
+			fprintf(o, "\n\n");
 	}
 
+	//  Close files
+	fclose(r);
 	fclose(o);
 }
