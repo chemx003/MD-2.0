@@ -45,7 +45,7 @@ int 	N				= 8192,			//  Number of particles
 		num_bin_y		= 10,			
 		num_bin_z		= 10;
 
-double 	num_steps 		= 75000, 		//  Number of timesteps
+double 	num_steps 		= 0, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
 	   	temp_init 		= 1.0,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
@@ -118,7 +118,7 @@ int main(){
 	calc_temp(); print_temp();
 	
 	//  Equilibration loop
-	for(int i = 0; i < 25000; i++) {
+	for(int i = 0; i < 50000; i++) {
 
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
@@ -132,6 +132,11 @@ int main(){
 
 			calc_E(); print_energies();
 			calc_temp(); print_temp();
+
+			diff = clock() - start;
+			int msec = diff*1000 / CLOCKS_PER_SEC;
+			printf("Time taken %d seconds %d milliseconds\n\n", msec/1000, 
+					msec%1000);
 		}
 
 		/*if(i < 20000) {
@@ -179,6 +184,11 @@ int main(){
 
 			calc_E(); print_energies();
 			calc_temp(); print_temp();
+
+			diff = clock() - start;
+			int msec = diff*1000 / CLOCKS_PER_SEC;
+			printf("Time taken %d seconds %d milliseconds\n\n", msec/1000,
+					msec%1000);
 		}
 
 		/*if(i < 20000) {
