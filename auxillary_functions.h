@@ -4,7 +4,7 @@
 				   		double* ex, double* ey, double* ez,
 				   		double* x_dir, double* y_dir, double* z_dir,
 				   		double* ex_dir, double* ey_dir, double* ez_dir,
-				   		double* eigenval, double q[][3][4], int avg);
+				   		double eigenval[][4], double q[][3][4], int avg);
 
 //  Calculate the total energy
 	void calc_E();

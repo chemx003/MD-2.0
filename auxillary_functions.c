@@ -41,7 +41,7 @@ void calc_dir_field(double* x, double* y, double* z,
 				   double* ex, double* ey, double* ez,
 				   double* x_dir, double* y_dir, double* z_dir,
 				   double* ex_dir, double* ey_dir, double* ez_dir,
-				   double* eigenval, double q[][3][4], int avg){
+				   double eigenval[][4], double q[][3][4], int avg){
 	/*  NEW GLOBAL VARIABLES
 	 *  int		num_bin_x,
 	 *  		num_bin_y,
@@ -144,11 +144,12 @@ void calc_dir_field(double* x, double* y, double* z,
 					dsyev_(&jobz, &uplo, &order, qt, &lda, w, work, &lwork, &info);
 
 					//  Store eigenstuff and position of bin?
-					eigenval[bin_number] = pow(w[0]*w[1]*w[2], 2)
+					eigenval[bin_number][0] = w[0];
+					eigenval[bin_number][1] = w[1];
+					eigenval[bin_number][2] = w[2]; 
+					eigenval[bin_number][3] = pow(w[0]*w[1]*w[2], 2)
 						/pow(w[0]*w[0]+w[1]*w[1]+w[2]*w[2], 3) - 1.0/54;
 					
-					//double mag = sqrt(qt[6]*qt[6] + qt[7]*qt[7] + qt[8]*qt[8]);
-
 					ex_dir[bin_number] = qt[6];///mag;
 					ey_dir[bin_number] = qt[7];///mag;
 					ez_dir[bin_number] = qt[8];///mag;
@@ -188,7 +189,7 @@ void calc_dir_field(double* x, double* y, double* z,
 				mag = mag_vec(ex_dir[i], ey_dir[i], ez_dir[i]);
 				printf("length after = %f\n", mag);
 				fprintf(o, "%f    %f    %f    %f\n", x_dir[i], y_dir[i], ex_dir[i], ey_dir[i]);
-				fprintf(p, "%f    %f    %f\n", x_dir[i], y_dir[i], eigenval[i]);
+				fprintf(p, "%f    %f    %f    %f    %f    %f\n", x_dir[i], y_dir[i], eigenval[i][3], eigenval[i][0], eigenval[i][1], eigenval[i][2]);
 			}
 		}
 

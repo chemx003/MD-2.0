@@ -38,26 +38,26 @@
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 100,			//  Number of particles
+int 	N				= 4096,			//  Number of particles
 		pcf_bins		= 400,			//  Number of bins for pcf
 		pcf_num_steps	= 10,			// 	Steps to avg pcf over
-		num_bin_x 		= 15,			//  Director bins
-		num_bin_y		= 15,			
-		num_bin_z		= 15;
+		num_bin_x 		= 6,			//  Director bins
+		num_bin_y		= 6,			
+		num_bin_z		= 6;
 
-double 	num_steps 		= 0, 		//  Number of timesteps
+double 	num_steps 		= 5000, 		//  Number of timesteps
 	   	dt 				= 0.0015, 		//  Length of time step
-	   	temp_init 		= 0.6,			//  Initial temperature
+	   	temp_init 		= 0.8,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
-	   	L				= 49.1,//63.1,			//  Length of simulation box
-	   	SL				= 17.1,//21.1,			//	Short length of the simulation box
+	   	L				= 48.5,//63.1,			//  Length of simulation box
+	   	SL				= 16.5,//21.1,			//	Short length of the simulation box
 
 	   	M				= 1.0,			//	Particle mass
 	  	I				= 1.0,			//  Particle moment of inertia
 
 	  	R				= 3.0,			//  Immersed sphere radius
-	  	W				= 35000,		//  Anchoring coefficient
+	  	W				= 350000,		//  Anchoring coefficient
 
 		KB				= 1.0,			//  Boltzmann Constant
 		PI				= 3.14159265358979; //  Pi
@@ -92,17 +92,27 @@ int main(){
 			gx[N], gy[N], gz[N],			//  Gorques
 			histo[pcf_bins][2],				//  Histogram for pcf
 			histo2[pcf_bins][2],			//  Histogram for ocf
-			eigenval[num_bin_x*num_bin_y*num_bin_z],
 			avg_temp, avg_sop;				//  Holders for avgs
 
 	double q[num_bin_x*num_bin_y*num_bin_z][3][4];
+	double eigenval[num_bin_x*num_bin_y*num_bin_z][4];
 
 	int		c_temp, c_sop;					//  Counters for avgs
+
+	int 	num_bins = num_bin_x*num_bin_y*num_bin_z;
 
 	clock_t start = clock(), diff;
 
 	//  Iteration
 	avg_temp = 0.0; avg_sop = 0.0; c_temp = 0.0; c_sop = 0.0;
+
+	for(int i = 0; i < num_bins; i++) {
+		for(int j = 0; j < 3; j++) {
+			for(int k = 0; k < 4; k++) {
+				q[i][j][k] = 0.0;
+			}
+		}
+	}
 
 	srand(1);
 
@@ -124,7 +134,7 @@ int main(){
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
 			   fx, fy, fz,
-			   gx, gy, gz, 0); 	//  Integrate the eqns of motion		
+			   gx, gy, gz, 0);  //  Integrate the eqns of motion		
 
 		calc_E(); write_energies(i);
 
@@ -154,15 +164,15 @@ int main(){
 
 		if(i%100 == 0){
 			write_vectors(x, y, z, ex, ey, ez);
-		/*	if(i>=200){
+			/*if(i>=200){
 				calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
 						ex_dir, ey_dir, ez_dir, eigenval, q, 0);
-			} */
+			}*/
 		}
 
 	}printf("Equilibriation complete");
 
-	/*calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
+/*	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
 					ex_dir, ey_dir, ez_dir, eigenval, q, 1);*/
 	
 	//  Carve away sphere
@@ -190,8 +200,8 @@ int main(){
 		calc_E(); write_energies(i);
 
 		if(num_steps-i <= pcf_num_steps){
-			write_pcf(x, y, z, histo, 0);
-			write_ocf(x, y, z, ex, ey, ez, histo2, 0);
+	//		write_pcf(x, y, z, histo, 0);
+	//		write_ocf(x, y, z, ex, ey, ez, histo2, 0);
 		}
 
 		if(i%100 == 0) {
@@ -220,15 +230,15 @@ int main(){
 
 		if(i%100 == 0) {
 			write_vectors(x, y, z, ex, ey, ez);
-				if(i>=200){
+				if(i>=3000){
 					calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
 						ex_dir, ey_dir, ez_dir, eigenval, q, 0);
-			} 
+				} 
 		}
 	}
 
 	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
-					ex_dir, ey_dir, ez_dir, eigenval, q, 1);
+					ex_dir, ey_dir, ez_dir, eigenval, q, 1); 
 
 	calc_E(); print_energies();
 	calc_temp(); print_temp();
@@ -240,8 +250,8 @@ int main(){
 	printf("AVG_SOPX = %f\n\n", avg_sop);
 
 	//  Analysis & Post-Processing
-	write_pcf(x, y, z, histo, 1);
-	write_ocf(x, y, z, ex, ey, ez, histo2, 1); 
+//	write_pcf(x, y, z, histo, 1);
+//	write_ocf(x, y, z, ex, ey, ez, histo2, 1); 
 
 	diff = clock() - start;
 	int msec = diff*1000 / CLOCKS_PER_SEC;
@@ -603,7 +613,7 @@ void init	(double* x, double* y, double* z,
 					//  Assign random orientations
 					ex[p] = 1; //dRand(-1.0, 1.0);
 					ey[p] = 0; //dRand(-1.0, 1.0);
-					ez[p] = 0; //dRand(-1.0, 1.0); 
+					ez[p] = 0; //dRand(-1.0, 1.0);
 
 					mag = sqrt(ex[p]*ex[p] + ey[p]*ey[p] + ez[p]*ez[p]);
 
