@@ -44,8 +44,8 @@ int 	N				= 100,			//  Number of particles
 		num_bin_x 		= 6,			//  Director bins
 		num_bin_y		= 6,			
 		num_bin_z		= 6,
-		num_steps 		= 100, 			//  Number of timesteps
-		num_steps_eqbm	= 100;			//  Number of eqbm timesteps
+		num_steps 		= 1000, 			//  Number of timesteps
+		num_steps_eqbm	= 1000;			//  Number of eqbm timesteps
 
 double 	dt 				= 0.0015, 		//  Length of time step
 	   	temp_init 		= 0.8,			//  Initial temperature
@@ -132,8 +132,6 @@ int main(){
 	//  Equilibration loop
 	for(int i = 0; i < num_steps_eqbm; i++) {
 
-		printf("%i\n", i);
-
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
 			   fx, fy, fz,
@@ -195,8 +193,6 @@ int main(){
 
 	//  Loop with sphere forces
 	for(int i = num_steps_eqbm; i < num_steps + num_steps_eqbm; i++) {
-
-		printf("%i\n", i);
 
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,

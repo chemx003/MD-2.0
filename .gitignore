@@ -2,5 +2,7 @@
 **/*.log
 **/*.pdf
 **/*.png
+**/*.out
 c-main
+c-postp
 
