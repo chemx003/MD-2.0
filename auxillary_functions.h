@@ -85,7 +85,7 @@
 
 //  Write the positions and orientations to a file
 	void write_vectors(double* x, double* y, double* z,
-					   double* ex, double* ey, double* ez);
+					   double* ex, double* ey, double* ez, int step);
 
 //  Same as write vectors but with marker for color
 	void write_vectors_colored(double* x, double* y, double* z,

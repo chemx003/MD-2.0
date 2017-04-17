@@ -177,8 +177,6 @@ void calc_dir_field(double* x, double* y, double* z,
 
 		double mid_z = (floor(num_bin_z/2) + 0.5) * len_bin_z;
 
-		printf("mid_z=%f\n\n", mid_z);
-
 		for(int i = 0; i < bin_number; i++){
 			if(fabs(z_dir[i] - mid_z) == 0 && isnan(ex_dir[i]) == 0){
 				double mag = mag_vec(ex_dir[i], ey_dir[i], ez_dir[i]);
@@ -359,15 +357,11 @@ void resize(double* x, double* y, double* z,
 	int	count, newN, p; //  Count up the number NANs			
 	p=0; count = 0;
 
-	printf("%i\n", N);
-
 	for(int i = 0; i < N; i++) {
 		if(isnan(x[i]) != 0){
 			count++;
 		}
 	}
-
-	printf("count = %i\n\n", count);
 
 	//  Number of particles in the new simulation
 	newN = N - count;
@@ -480,11 +474,6 @@ void resize(double* x, double* y, double* z,
 			gy[i] = 0;
 			gz[i] = 0;	
 		}
-	}
-
-	
-	for(int i = 0; i < N; i++){
-		printf("x[p] = %f\n", x[i]);
 	}
 
 	//  Assign new number of particles
@@ -757,9 +746,11 @@ void write_temp(double time){
 
 //  Write the positions and orientations to a file for display puposes
 void write_vectors(double* x, double* y, double* z,
-				   double* ex, double* ey, double* ez){
+				   double* ex, double* ey, double* ez, int step){
 	FILE* o;
 	o = fopen("vector.dat", "a");
+
+	fprintf(o, "%i\t%i\n", step, N);
 
 	for(int i = 0; i < N; i++){
 		fprintf(o, "%f\t%f\t%f\t%f\t%f\t%f\n", x[i], y[i], z[i], 

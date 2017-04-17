@@ -17,6 +17,8 @@ int main(){
 	double 	x[N], y[N], z[N],
 			ex[N], ey[N], ez[N];
 
+	int step;
+
 	//  Read the vector.dat file
 	FILE* r;
 	r = fopen("./vector.dat", "r");
@@ -27,6 +29,10 @@ int main(){
 
 
 	while(feof(r)==0) {
+
+		if(feof(r) == 0) {
+			fscanf(r, "%i\t%i\n", &step, &N);
+		}
 
 		//  Read data in from vector.dat
 		for(int i=0; i < N; i++) {
@@ -39,10 +45,11 @@ int main(){
 		/*  Functions to operate on x y z ex ey ez ... maybe just print
 		 *  after the sphere is removed and use that N? */
 
-		//  Write data out to test_vector.dat
+		/*  This writes out the animation.dat file which should not have the
+		 *  step number and number of particles at the top of each block */
 		for(int i = 0; i < N; i++){
 				fprintf(o, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%i\n", x[i], y[i], z[i], 
-						ex[i], ey[i], ez[i], i); 
+						ex[i], ey[i], ez[i]); 
 		}
 
 			fprintf(o, "\n\n");

@@ -38,15 +38,16 @@
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 4096,			//  Number of particles
+int 	N				= 100,			//  Number of particles
 		pcf_bins		= 400,			//  Number of bins for pcf
 		pcf_num_steps	= 10,			// 	Steps to avg pcf over
 		num_bin_x 		= 6,			//  Director bins
 		num_bin_y		= 6,			
-		num_bin_z		= 6;
+		num_bin_z		= 6,
+		num_steps 		= 100, 			//  Number of timesteps
+		num_steps_eqbm	= 100;			//  Number of eqbm timesteps
 
-double 	num_steps 		= 5000, 		//  Number of timesteps
-	   	dt 				= 0.0015, 		//  Length of time step
+double 	dt 				= 0.0015, 		//  Length of time step
 	   	temp_init 		= 0.8,			//  Initial temperature
 	   	xi = 0, eta = 0,				//  Thermostat variables
 
@@ -129,7 +130,9 @@ int main(){
 	calc_temp(); print_temp();
 	
 	//  Equilibration loop
-	for(int i = 0; i < 500; i++) {
+	for(int i = 0; i < num_steps_eqbm; i++) {
+
+		printf("%i\n", i);
 
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
@@ -163,14 +166,14 @@ int main(){
 		}
 
 		if(i%100 == 0){
-			write_vectors(x, y, z, ex, ey, ez);
+			write_vectors(x, y, z, ex, ey, ez, i);
 			/*if(i>=200){
 				calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
 						ex_dir, ey_dir, ez_dir, eigenval, q, 0);
 			}*/
 		}
 
-	}printf("Equilibriation complete");
+	}printf("Equilibriation complete \n");
 
 /*	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
 					ex_dir, ey_dir, ez_dir, eigenval, q, 1);*/
@@ -184,13 +187,16 @@ int main(){
 			ex, ey, ez, ux, uy, uz, 
 			fx, fy, fz, gx, gy, gz);
 
-	write_vectors(x, y, z, ex, ey, ez);
+	/*write_vectors(x, y, z, ex, ey, ez, num_steps_eqbm);
+	printf("Marked @ %i\n", num_steps_eqbm);*/
 
 	//  Calculate the forces and torques w/ sphere
 	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz, 1);
 
 	//  Loop with sphere forces
-	for(int i = 0; i < num_steps; i++) {
+	for(int i = num_steps_eqbm; i < num_steps + num_steps_eqbm; i++) {
+
+		printf("%i\n", i);
 
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
@@ -199,7 +205,7 @@ int main(){
 
 		calc_E(); write_energies(i);
 
-		if(num_steps-i <= pcf_num_steps){
+		if(num_steps + num_steps_eqbm - i <= pcf_num_steps){
 	//		write_pcf(x, y, z, histo, 0);
 	//		write_ocf(x, y, z, ex, ey, ez, histo2, 0);
 		}
@@ -229,7 +235,7 @@ int main(){
 		}
 
 		if(i%100 == 0) {
-			write_vectors(x, y, z, ex, ey, ez);
+			write_vectors(x, y, z, ex, ey, ez, i);
 				if(i>=3000){
 					calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
 						ex_dir, ey_dir, ez_dir, eigenval, q, 0);
