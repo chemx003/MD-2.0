@@ -36,6 +36,9 @@ int main(){
 			}
 		}
 
+		/*  Functions to operate on x y z ex ey ez ... maybe just print
+		 *  after the sphere is removed and use that N? */
+
 		//  Write data out to test_vector.dat
 		for(int i = 0; i < N; i++){
 				fprintf(o, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%i\n", x[i], y[i], z[i], 

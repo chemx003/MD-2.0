@@ -254,7 +254,7 @@ void mark_particles(double* x, double* y, double* z,
 
 	for(int i = 0; i < N; i++){
 		if(pow(x[i] - L/2.0, 2.0) + pow(y[i] - SL/2.0, 2.0) + 
-				pow(z[i] - SL/2.0, 2.0) <= pow(R + 3.0, 2.0)){
+				pow(z[i] - SL/2.0, 2.0) <= pow(R + 1.5, 2.0)){
 			
 			x[i] = NAN;
 			y[i] = NAN; 
