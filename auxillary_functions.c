@@ -252,7 +252,7 @@ void mark_particles(double* x, double* y, double* z,
 
 	for(int i = 0; i < N; i++){
 		if(pow(x[i] - L/2.0, 2.0) + pow(y[i] - SL/2.0, 2.0) + 
-				pow(z[i] - SL/2.0, 2.0) <= pow(R + 1.5, 2.0)){
+				pow(z[i] - SL/2.0, 2.0) <= pow(R + 2.0, 2.0)){
 			
 			x[i] = NAN;
 			y[i] = NAN; 
@@ -750,7 +750,7 @@ void write_vectors(double* x, double* y, double* z,
 	FILE* o;
 	o = fopen("vector.dat", "a");
 
-	fprintf(o, "%i\t%i\n", step, N);
+	//fprintf(o, "%i\t%i\n", step, N);
 
 	for(int i = 0; i < N; i++){
 		fprintf(o, "%f\t%f\t%f\t%f\t%f\t%f\n", x[i], y[i], z[i], 

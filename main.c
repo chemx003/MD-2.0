@@ -38,13 +38,13 @@
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 100,			//  Number of particles
+int 	N				= 4096,			//  Number of particles
 		pcf_bins		= 400,			//  Number of bins for pcf
 		pcf_num_steps	= 10,			// 	Steps to avg pcf over
-		num_bin_x 		= 6,			//  Director bins
-		num_bin_y		= 6,			
-		num_bin_z		= 6,
-		num_steps 		= 1000, 			//  Number of timesteps
+		num_bin_x 		= 8,			//  Director bins
+		num_bin_y		= 8,			
+		num_bin_z		= 8,
+		num_steps 		= 2500, 			//  Number of timesteps
 		num_steps_eqbm	= 1000;			//  Number of eqbm timesteps
 
 double 	dt 				= 0.0015, 		//  Length of time step
@@ -58,7 +58,7 @@ double 	dt 				= 0.0015, 		//  Length of time step
 	  	I				= 1.0,			//  Particle moment of inertia
 
 	  	R				= 3.0,			//  Immersed sphere radius
-	  	W				= 350000,		//  Anchoring coefficient
+	  	W				= 35000,		//  Anchoring coefficient
 
 		KB				= 1.0,			//  Boltzmann Constant
 		PI				= 3.14159265358979; //  Pi
@@ -66,7 +66,8 @@ double 	dt 				= 0.0015, 		//  Length of time step
 //  Data
 double	KT, KR, K, V, E, 				//  Pot, kin, tot energies
 		P,								//  Pressure
-		T;								//  Temperature
+		T,								//  Temperature
+		density;						//  Density
 
 /*----------------------------------------------------------------------------*/
 
@@ -144,6 +145,18 @@ int main(){
 
 			calc_E(); print_energies();
 			calc_temp(); print_temp();
+
+			density = N/(L*SL*SL);
+			printf("density = %f\n\n", density);
+
+			double sop = return_sopx(ex);
+			printf("sop = %f\n\n", sop);
+
+			diff = clock() - start;
+			int msec = diff*1000 / CLOCKS_PER_SEC;
+			printf("Time taken %d seconds %d milliseconds\n\n", 
+					msec/1000, msec%1000);
+
 		}
 
 		/*if(i < 20000) {
@@ -211,6 +224,17 @@ int main(){
 
 			calc_E(); print_energies();
 			calc_temp(); print_temp();
+
+			density = N/(L*SL*SL - 4.0*PI*R*R*R/3.0);
+			printf("density = %f\n", density);
+
+			double sop = return_sopx(ex);
+			printf("sop = %f\n\n", sop);
+
+			diff = clock() - start;
+			int msec = diff*1000 / CLOCKS_PER_SEC;
+			printf("Time taken %d seconds %d milliseconds\n\n", 
+					msec/1000, msec%1000);
 		}
 
 		/*if(i < 20000) {
@@ -232,11 +256,12 @@ int main(){
 
 		if(i%100 == 0) {
 			write_vectors(x, y, z, ex, ey, ez, i);
-				if(i>=3000){
-					calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
-						ex_dir, ey_dir, ez_dir, eigenval, q, 0);
-				} 
 		}
+
+		if(i >= num_steps + num_steps_eqbm - 50){
+			calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
+				ex_dir, ey_dir, ez_dir, eigenval, q, 0);
+		} 
 	}
 
 	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
