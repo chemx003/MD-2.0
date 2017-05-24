@@ -7,8 +7,8 @@
 #include <unistd.h>
 #include <signal.h>
 
-/*-----------------------  Function Declarations  ----------------------------*/
-//  Gay-Berne: Calulate the forces and torques
+/*-----------------------  Function Declarations -----------------------------*/
+//  Gay-Berne: calulate the forces and torques
 	void gb		(double* x, double* y, double* z,
 				double* ex, double* ey, double* ez,
 				double* fx, double* fy, double* fz,
@@ -21,7 +21,7 @@
 			  	double* ex, double* ey, double* ez,
 			  	double* ux, double* uy, double* uz);
 
-//  Numerically integrate Newton's Equations
+//  Numerically integrate equations of motion
 	void iterate (double* x, double* y, double* z,
 			  	double* vx, double* vy, double* vz,
 			  	double* ex, double* ey, double* ez,
@@ -30,44 +30,41 @@
 			  	double* gx, double* gy, double* gz,
 			  	int sphere);
 
-/*  Have write temp and write sop return the values take a sum to calculate 
- *  the average */
-
 /*----------------------------------------------------------------------------*/
 
 
 /*--------------------------  Global Variables  ------------------------------*/
 //  Simulation Parameters
-int 	N				= 4096,			//  Number of particles
-		pcf_bins		= 400,			//  Number of bins for pcf
-		pcf_num_steps	= 10,			// 	Steps to avg pcf over
-		num_bin_x 		= 8,			//  Director bins
-		num_bin_y		= 8,			
-		num_bin_z		= 8,
-		num_steps 		= 2500, 			//  Number of timesteps
-		num_steps_eqbm	= 1000;			//  Number of eqbm timesteps
+int 	N				= 4096,				//  Number of particles
+		pcf_bins		= 400,				//  Number of bins for pcf
+		pcf_num_steps	= 10,				// 	Steps to avg pcf over
+		num_bin_x 		= 11,				//  Director bins
+		num_bin_y		= 11,			
+		num_bin_z		= 11,
+		num_steps 		= 75000, 			//  Number of timesteps
+		num_steps_eqbm	= 25000;			//  Number of eqbm timesteps
 
-double 	dt 				= 0.0015, 		//  Length of time step
-	   	temp_init 		= 0.8,			//  Initial temperature
-	   	xi = 0, eta = 0,				//  Thermostat variables
+double 	dt 				= 0.0015, 			//  Length of time step
+	   	temp_init 		= 0.8,				//  Initial temperature
+	   	xi = 0, eta = 0,					//  Thermostat variables
 
-	   	L				= 48.5,//63.1,			//  Length of simulation box
-	   	SL				= 16.5,//21.1,			//	Short length of the simulation box
+	   	L				= 48.5,				//  Length of sim box
+	   	SL				= 16.5,				//	Short length of sim box
 
-	   	M				= 1.0,			//	Particle mass
-	  	I				= 1.0,			//  Particle moment of inertia
+	   	M				= 1.0,				//	Particle mass
+	  	I				= 1.0,				//  Particle moment of inertia
 
-	  	R				= 3.0,			//  Immersed sphere radius
-	  	W				= 35000,		//  Anchoring coefficient
+	  	R				= 3.0,				//  Immersed sphere radius
+	  	W				= 35000,			//  Anchoring coefficient
 
-		KB				= 1.0,			//  Boltzmann Constant
+		KB				= 1.0,				//  Boltzmann Constant
 		PI				= 3.14159265358979; //  Pi
 
 //  Data
-double	KT, KR, K, V, E, 				//  Pot, kin, tot energies
-		P,								//  Pressure
-		T,								//  Temperature
-		density;						//  Density
+double	KT, KR, K, V, E, 					//  Pot, kin, tot energies
+		P,									//  Pressure
+		T,									//  Temperature
+		density;							//  Density
 
 /*----------------------------------------------------------------------------*/
 
@@ -78,34 +75,38 @@ double	KT, KR, K, V, E, 				//  Pot, kin, tot energies
 int main(){
 	
 	//  Local variables
-	double 	x[N], y[N], z[N], 				//  Particle coords at n
-			x_dir[num_bin_x*num_bin_y*num_bin_z],
-			y_dir[num_bin_x*num_bin_y*num_bin_z],
-			z_dir[num_bin_x*num_bin_y*num_bin_z],
-			vx[N], vy[N], vz[N],			//	Particle coords at n-1
-
-			ex[N], ey[N], ez[N],			//  Particle orient at n
-			ex_dir[num_bin_x*num_bin_y*num_bin_z],
-			ey_dir[num_bin_x*num_bin_y*num_bin_z],
-			ez_dir[num_bin_x*num_bin_y*num_bin_z],	
-			ux[N], uy[N], uz[N],			//  Particle orient at n-1
+	double 	x[N], y[N], z[N], 				//  Particle coords
+			vx[N], vy[N], vz[N],			//	Particle vel.
+			ex[N], ey[N], ez[N],			//  Particle orient
+			ux[N], uy[N], uz[N],			//  Particle ang. vel.
 
 			fx[N], fy[N], fz[N],			//  Forces
 			gx[N], gy[N], gz[N],			//  Gorques
+
+			//  Bin coordinates
+			x_dir[num_bin_x*num_bin_y*num_bin_z],
+			y_dir[num_bin_x*num_bin_y*num_bin_z],
+			z_dir[num_bin_x*num_bin_y*num_bin_z],
+			
+			//  Local director
+			ex_dir[num_bin_x*num_bin_y*num_bin_z],
+			ey_dir[num_bin_x*num_bin_y*num_bin_z],
+			ez_dir[num_bin_x*num_bin_y*num_bin_z],	
+
 			histo[pcf_bins][2],				//  Histogram for pcf
 			histo2[pcf_bins][2],			//  Histogram for ocf
 			avg_temp, avg_sop;				//  Holders for avgs
 
-	double q[num_bin_x*num_bin_y*num_bin_z][3][4];
-	double eigenval[num_bin_x*num_bin_y*num_bin_z][4];
+	double q[num_bin_x*num_bin_y*num_bin_z][3][4];		//  Q-tensor
+	double eigenval[num_bin_x*num_bin_y*num_bin_z][4];	//  Eigenvalues
 
 	int		c_temp, c_sop;					//  Counters for avgs
 
-	int 	num_bins = num_bin_x*num_bin_y*num_bin_z;
+	int 	num_bins = num_bin_x*num_bin_y*num_bin_z;	//  Total bins
 
 	clock_t start = clock(), diff;
 
-	//  Iteration
+	//  Initialize variables
 	avg_temp = 0.0; avg_sop = 0.0; c_temp = 0.0; c_sop = 0.0;
 
 	for(int i = 0; i < num_bins; i++) {
@@ -116,27 +117,25 @@ int main(){
 		}
 	}
 
+	//  Set random seed
 	srand(1);
 
+	//  Check for correct initialization
 	print_global_variables();
 
-	init(x, y, z, vx, vy, vz,ex, ey, ez, ux, uy, uz);	//  Initialize
-
-	//  Calculate the forces and torques
+	//  Initialize simulation and calc first forces and torques
+	init(x, y, z, vx, vy, vz,ex, ey, ez, ux, uy, uz);
 	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz, 0);
-
-	// write_vectors(x, y, z, ex, ey, ez);
-
 	calc_E(); print_energies();
 	calc_temp(); print_temp();
 	
-	//  Equilibration loop
+	//  Equilibriation of nematic liquid crystal
 	for(int i = 0; i < num_steps_eqbm; i++) {
 
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
 			   fx, fy, fz,
-			   gx, gy, gz, 0);  //  Integrate the eqns of motion		
+			   gx, gy, gz, 0); 		
 
 		calc_E(); write_energies(i);
 
@@ -152,44 +151,20 @@ int main(){
 			double sop = return_sopx(ex);
 			printf("sop = %f\n\n", sop);
 
+			//  Print current time
 			diff = clock() - start;
 			int msec = diff*1000 / CLOCKS_PER_SEC;
 			printf("Time taken %d seconds %d milliseconds\n\n", 
 					msec/1000, msec%1000);
 
+			write_vectors(x, y, z, ex, ey, ez, i);
 		}
-
-		/*if(i < 20000) {
-				rescale(x,y,z,xOld,yOld,zOld,ex,ey,ez,exOld,eyOld,ezOld);
-		}*/
 
 		write_sop(ex, ey, ez, i);
 		write_temp(i);
-
-		if(i>30000){
-			avg_temp = avg_temp + return_temp();
-			c_temp++;
-
-			if(fabs(return_sopx(ex))<3.0){
-				avg_sop = avg_sop + return_sopx(ex);
-				c_sop++;
-			}
-		}
-
-		if(i%100 == 0){
-			write_vectors(x, y, z, ex, ey, ez, i);
-			/*if(i>=200){
-				calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
-						ex_dir, ey_dir, ez_dir, eigenval, q, 0);
-			}*/
-		}
-
-	}printf("Equilibriation complete \n");
-
-/*	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
-					ex_dir, ey_dir, ez_dir, eigenval, q, 1);*/
+	}
 	
-	//  Carve away sphere
+	//  Insert sphere
 	mark_particles(x, y, z, vx, vy, vz, 
 					ex, ey, ez, ux, uy, uz, 
 					fx, fy, fz, gx, gy, gz);
@@ -198,26 +173,18 @@ int main(){
 			ex, ey, ez, ux, uy, uz, 
 			fx, fy, fz, gx, gy, gz);
 
-	/*write_vectors(x, y, z, ex, ey, ez, num_steps_eqbm);
-	printf("Marked @ %i\n", num_steps_eqbm);*/
-
 	//  Calculate the forces and torques w/ sphere
 	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz, 1);
 
-	//  Loop with sphere forces
+	//  Equilibriate with sphere
 	for(int i = num_steps_eqbm; i < num_steps + num_steps_eqbm; i++) {
 
 		iterate(x, y, z, vx, vy, vz,
 			   ex, ey, ez, ux, uy, uz,
 			   fx, fy, fz,
-			   gx, gy, gz, 1); 	//  Integrate the eqns of motion		
+			   gx, gy, gz, 1);		
 
 		calc_E(); write_energies(i);
-
-		if(num_steps + num_steps_eqbm - i <= pcf_num_steps){
-	//		write_pcf(x, y, z, histo, 0);
-	//		write_ocf(x, y, z, ex, ey, ez, histo2, 0);
-		}
 
 		if(i%100 == 0) {
 			printf("%i\n", i);
@@ -231,19 +198,19 @@ int main(){
 			double sop = return_sopx(ex);
 			printf("sop = %f\n\n", sop);
 
+			//  Print current time
 			diff = clock() - start;
 			int msec = diff*1000 / CLOCKS_PER_SEC;
 			printf("Time taken %d seconds %d milliseconds\n\n", 
 					msec/1000, msec%1000);
-		}
 
-		/*if(i < 20000) {
-				rescale(x,y,z,xOld,yOld,zOld,ex,ey,ez,exOld,eyOld,ezOld);
-		}*/
+			write_vectors(x, y, z, ex, ey, ez, i);
+		}
 
 		write_sop(ex, ey, ez, i);
 		write_temp(i);
 
+		//  Calculate average temp and sopx
 		if(i>30000){
 			avg_temp = avg_temp + return_temp();
 			c_temp++;
@@ -254,32 +221,37 @@ int main(){
 			}
 		}
 
-		if(i%100 == 0) {
-			write_vectors(x, y, z, ex, ey, ez, i);
-		}
-
+		//  Director field 
 		if(i >= num_steps + num_steps_eqbm - 50){
 			calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
 				ex_dir, ey_dir, ez_dir, eigenval, q, 0);
 		} 
-	}
 
-	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
-					ex_dir, ey_dir, ez_dir, eigenval, q, 1); 
+		//  PCF & OCF
+		if(num_steps + num_steps_eqbm - i <= pcf_num_steps){
+			write_pcf(x, y, z, histo, 0);
+			write_ocf(x, y, z, ex, ey, ez, histo2, 0);
+		}
 
+	}	
 	calc_E(); print_energies();
 	calc_temp(); print_temp();
 
+	//  Calc average temps
 	avg_temp = avg_temp/c_temp;
 	avg_sop = avg_sop/c_sop;
-
 	printf("AVG_TEMP = %f\n", avg_temp);
 	printf("AVG_SOPX = %f\n\n", avg_sop);
 
-	//  Analysis & Post-Processing
-//	write_pcf(x, y, z, histo, 1);
-//	write_ocf(x, y, z, ex, ey, ez, histo2, 1); 
+	//  Average PCF & OCF data
+	write_pcf(x, y, z, histo, 1);
+	write_ocf(x, y, z, ex, ey, ez, histo2, 1); 
 
+	//  Average director/q-tensor data
+	calc_dir_field(x, y, z, ex, ey, ez, x_dir, y_dir, z_dir,
+					ex_dir, ey_dir, ez_dir, eigenval, q, 1); 
+
+	//  Print total time
 	diff = clock() - start;
 	int msec = diff*1000 / CLOCKS_PER_SEC;
 	printf("Time taken %d seconds %d milliseconds\n\n", msec/1000, msec%1000);
@@ -338,11 +310,9 @@ void gb		(double* x, double* y, double* z,
 	xhi = (pow(xappa, 1.0/mu) - 1.0) / (pow(xappa, 1.0/mu) + 1.0);
 
 	rc = 6.0;
-
-	//  Example chooses eps0 and sigma_s equal 1 by units...
 	/*-----------------------------------------------------------*/
 
-	//  Resetting quantiies
+	//  Initialize to zero
 	for(int i = 0; i < N; i++) {
 		fx[i] = 0.0; fy[i] = 0.0; fz[i] = 0.0;
 		gx[i] = 0.0; gy[i] = 0.0; gz[i] = 0.0;
@@ -455,11 +425,6 @@ void gb		(double* x, double* y, double* z,
 				gy2 = dpot_dsj*hy + dpot_dsij*ey[i];
 				gz2 = dpot_dsj*hz + dpot_dsij*ez[i]; 
 
-				if(gx1>10000){
-					printf("gx1 = %f\n rij = %f\n rho = %f\n i = %i, j = %i\n\n", 
-							gx1, rij, rho, i, j);
-				}
-
 				//  Derivatives of the potential at the cuttoff
 				dpot_drij = epsilon * dcutterm;
 				dpot_dsi = cutterm*deps_dsi - epsilon*dcutterm*dsig_dsi;
@@ -505,84 +470,80 @@ void gb		(double* x, double* y, double* z,
 			}
 		}
 	}
+	
+	//  Calculate sphere interactions
+	if(sphere == 1){
+		for(int i = 0; i < N; i++){
+			//  Components of seperation vector
+			dx = x[i] - L/2.0;
+			dy = y[i] - SL/2.0;
+			dz = z[i] - SL/2.0;
 
-	for(int i = 0; i < N; i++){
-		//  Components of seperation vector
-		dx = x[i] - L/2.0;
-		dy = y[i] - SL/2.0;
-		dz = z[i] - SL/2.0;
+			//  Magnitude of seperation
+			r2 = dx*dx + dy*dy + dz*dz;
+			r = sqrt(r2);
 
-		//  Magnitude of seperation
-		r2 = dx*dx + dy*dy + dz*dz;
-		r = sqrt(r2);
+			if(r < R + 6.0){
+				// printf("in sphere terms\n\n");
 
-		// if(r < R + 3.0){printf("%f\n",r);}
+				r6 = r*r*r*r*r*r;
+				r7 = r6*r;
 
-		if(r < R + 6.0 && sphere == 1){
-			// printf("in sphere terms\n\n");
+				//  Components of the unit vector
+				hx = dx / r; 
+				hy = dy / r;
+				hz = dz / r;
 
-			r6 = r*r*r*r*r*r;
-			r7 = r6*r;
+				//  Scalar product of r and e
+				re = hx*ex[i] + hy*ey[i] + hz*ez[i];
+				re5 = re*re*re*re*re;
+				re6 = re5*re;
 
-			//  Components of the unit vector
-			hx = dx / r; 
-			hy = dy / r;
-			hz = dz / r;
+				chiS = 8.0 / (9.0 + 4*R*R);
+				sigmaS = sqrt((1 + 4*R*R)/2);
+				root = sqrt(1.0 - chiS*re*re);
+				root3 = root*root*root;
+				double sigSbyR = sigmaS/root;
+				
+				//  Potential at R
+				rhoS = r - sigSbyR + 1.0;
+				rhoS18 = pow(1.0/rhoS, 18);
+				rhoS19 = rhoS18/rhoS;
+				
+				//  Force due to sphere
+				fxi = 72 * rhoS19 * (hx - chiS/(2*root3)*(ex[i]/r - re*hx/r));
+				fyi = 72 * rhoS19 * (hy - chiS/(2*root3)*(ey[i]/r - re*hy/r));
+				fzi = 72 * rhoS19 * (hz - chiS/(2*root3)*(ez[i]/r - re*hz/r));
 
-			//  Scalar product of r and e
-			re = hx*ex[i] + hy*ey[i] + hz*ez[i];
-			re5 = re*re*re*re*re;
-			re6 = re5*re;
+				//printf("%f\t%f\t%f\t%f\t\n", fx[i],fxi,r,rhoS);
 
-			chiS = 8.0 / (9.0 + 4*R*R);
-			sigmaS = sqrt((1 + 4*R*R)/2);
-			root = sqrt(1.0 - chiS*re*re);
-			root3 = root*root*root;
-			double sigSbyR = sigmaS/root;
-			
-			//  Potential at R
-			rhoS = r - sigSbyR + 1.0;
-			rhoS18 = pow(1.0/rhoS, 18);
-			rhoS19 = rhoS18/rhoS;
-			
-			//  Force due to sphere
-			fxi = 72 * rhoS19 * (hx - chiS/(2*root3)*(ex[i]/r - re*hx/r));
-			fyi = 72 * rhoS19 * (hy - chiS/(2*root3)*(ey[i]/r - re*hy/r));
-			fzi = 72 * rhoS19 * (hz - chiS/(2*root3)*(ez[i]/r - re*hz/r));
+				//  Torque due to sphere
+				gx1 = 72 * rhoS19 * chiS*sigmaS/(2*root3) * hx;
+				gy1 = 72 * rhoS19 * chiS*sigmaS/(2*root3) * hy;
+				gz1 = 72 * rhoS19 * chiS*sigmaS/(2*root3) * hz;
 
-			//printf("%f\t%f\t%f\t%f\t\n", fx[i],fxi,r,rhoS);
+				//  Force due to surface anchoring
+				fxi = fxi - 6*W*(re6/r7*hx - re5/r6*(ex[i]/r - re*hx/r));
+				fyi = fyi - 6*W*(re6/r7*hy - re5/r6*(ey[i]/r - re*hy/r));
+				fzi = fzi - 6*W*(re6/r7*hz - re5/r6*(ez[i]/r - re*hz/r));
 
-			//  Torque due to sphere
-			gx1 = 72 * rhoS19 * chiS*sigmaS/(2*root3) * hx;
-			gy1 = 72 * rhoS19 * chiS*sigmaS/(2*root3) * hy;
-			gz1 = 72 * rhoS19 * chiS*sigmaS/(2*root3) * hz;
+				//  Torqe due to surface anchoring
+				gx1 = gx1 - 6*W*re5/r6*hx;
+				gy1 = gy1 - 6*W*re5/r6*hy;
+				gz1 = gz1 - 6*W*re5/r6*hz;
 
-			if(fabs(gx1) > 10000){
-				printf("i = %i\nr = %f\ngx1 = %f\nsigmaS = %f\nchiS = %f\nre = %f\nroot = %f\nrhoS = %f\nsigSbyR = %f\n\n", i, r, gx1, sigmaS, chiS, re, root, rhoS, sigSbyR);
+				fx[i] = fx[i] + fxi;
+				fy[i] = fy[i] + fyi;
+				fz[i] = fz[i] + fzi;
+
+				gx[i] = gx[i] - gx1;
+				gy[i] = gy[i] - gy1;
+				gz[i] = gz[i] - gz1;
+
+				V = V + 4*rhoS18 - W*re/6;
 			}
-
-			//  Force due to surface anchoring
-			fxi = fxi - 6*W*(re6/r7*hx - re5/r6*(ex[i]/r - re*hx/r));
-			fyi = fyi - 6*W*(re6/r7*hy - re5/r6*(ey[i]/r - re*hy/r));
-			fzi = fzi - 6*W*(re6/r7*hz - re5/r6*(ez[i]/r - re*hz/r));
-
-			//  Torqe due to surface anchoring
-			gx1 = gx1 - 6*W*re5/r6*hx;
-			gy1 = gy1 - 6*W*re5/r6*hy;
-			gz1 = gz1 - 6*W*re5/r6*hz;
-
-			fx[i] = fx[i] + fxi;
-			fy[i] = fy[i] + fyi;
-			fz[i] = fz[i] + fzi;
-
-			gx[i] = gx[i] - gx1;
-			gy[i] = gy[i] - gy1;
-			gz[i] = gz[i] - gz1;
-
-			V = V + 4*rhoS18 - W*re/6;
 		}
 	}
-
 }
 
 /*  Initialize particle positions, orientations, velocities, and angular 
@@ -597,10 +558,10 @@ void init	(double* x, double* y, double* z,
 			sumVx2, sumVy2, sumVz2, 		//  Set kinetic energy
 			sumUx2, sumUy2, sumUz2,
 
-			sfvx, sfvy, sfvz,				//  Scaling factor
+			sfvx, sfvy, sfvz,				//  Scaling factors
 			sfux, sfuy, sfuz,
 
-			a,b,								//  Particle spacing
+			a,b,							//  Particle spacing
 
 			mag;							//  Magnitude of orientation
 
@@ -637,10 +598,10 @@ void init	(double* x, double* y, double* z,
 					y[p] = r;
 					z[p] = s;
 
-					//  Assign random orientations
-					ex[p] = 1; //dRand(-1.0, 1.0);
-					ey[p] = 0; //dRand(-1.0, 1.0);
-					ez[p] = 0; //dRand(-1.0, 1.0);
+					//  Assign orientations
+					ex[p] = 1;
+					ey[p] = 0; 
+					ez[p] = 0;
 
 					mag = sqrt(ex[p]*ex[p] + ey[p]*ey[p] + ez[p]*ez[p]);
 
@@ -714,8 +675,6 @@ void init	(double* x, double* y, double* z,
 		KR = KR + 0.5 * I * (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i]);
 		K = KT + KR;
 	}
-
-	//write_vectors(x,y,z,fx,fy,fz);
 }
 
 /*  Calculate the new positions and orientations. Update the kinetic energy.
@@ -734,7 +693,7 @@ void iterate	(double* x, double* y, double* z,
 			vxi, vyi, vzi,				//  Velocities at current timestep
 			uxi, uyi, uzi,				//  Ang. velocities at current timestep
 
-			d1, d2, b, lm;					//  Dot products and the lagrange mult.
+			d1, d2, b, lm;				//  Dot products and the lagrange mult.
 
 	double  color[N];
 
@@ -753,22 +712,25 @@ void iterate	(double* x, double* y, double* z,
 		uy[i] = uy[i]*(1 - xi*dt/2) + 0.5*gy[i]*dt/I;
 		uz[i] = uz[i]*(1 - xi*dt/2) + 0.5*gz[i]*dt/I;
 
+		//  Calculate lagrange multipliers
 		d1 = ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i];
 		d2 = ex[i]*ux[i] + ey[i]*uy[i] + ez[i]*uz[i];
 		b = d2 + 1/dt;
 
 		double lm1 = -b + sqrt(b*b - d1 - 2*d2/dt);
 		double lm2 = -b - sqrt(b*b - d1 - 2*d2/dt);
+
 		lm = lm1;
 		if(fabs(lm2) < fabs(lm1)){ lm = lm2; }
 
-		//cout << "lm = " << lm << endl;
-
 		double mag = ex[i]*ex[i] + ey[i]*ey[i] + ez[i]*ez[i];
-		if(fabs(1-mag) > 0.1){
+
+		//  Check for unit length
+		if(fabs(1 - mag) > 0.1){
 			printf("i = %i\t mag = %f\n", i, mag);
 		}
 
+		//  Check that lagrange multiplier is real
 		if(isnan(lm)!=0){
 			printf("LM IS NAN for i = %i\n", i);
 			double mag = ex[i]*ex[i] + ey[i]*ey[i] + ez[i]*ez[i];
@@ -792,13 +754,14 @@ void iterate	(double* x, double* y, double* z,
 		KT = KT + 0.5 * M * (vx[i]*vx[i] + vy[i]*vy[i] + vz[i]*vz[i]);
 		KR = KR + 0.5 * I * (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i]);
 		K = KT + KR;
-		//if(mag != 1.0){ cout << mag << endl; }
 	}
-
+	
+	//  Thermostat term
 	xi = xi + (2*K - (5*N-3)*temp_init)*dt;
 
 	KT = KR = K = 0;
 
+	//  Calculate forces at the next timestep
 	gb(x, y, z, ex, ey, ez, fx, fy, fz, gx, gy, gz, sphere);
 
 	for(int i = 0; i < N; i++) {
@@ -818,8 +781,6 @@ void iterate	(double* x, double* y, double* z,
 		KR = KR + 0.5 * I * (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i]);
 		K = KT + KR;
 	}
-
-	//write_vectors(x,y,z,fx,fy,fz);
 
 	//  Apply periodic boundary conditions
 	for(int i = 0; i < N; i++) {

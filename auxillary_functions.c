@@ -36,28 +36,24 @@ extern double	KT, KR, K, V, E, 			//  Pot, kin, tot energies
 extern void dsyev_(char* JOBZ, char* UPLO, int* N, double* A, int* LDA, 
 				   double* W, double* WORK, int* LWORK, int* INFO);
 /*----------------------------------------------------------------------------*/
+
 //  Calculate the director field at the current timestep
 void calc_dir_field(double* x, double* y, double* z,
 				   double* ex, double* ey, double* ez,
 				   double* x_dir, double* y_dir, double* z_dir,
 				   double* ex_dir, double* ey_dir, double* ez_dir,
 				   double eigenval[][4], double q[][3][4], int avg){
-	/*  NEW GLOBAL VARIABLES
-	 *  int		num_bin_x,
-	 *  		num_bin_y,
-	 *  		num_bin_z; */
 
-	double 	len_bin_x, len_bin_y, len_bin_z, //  bin dimensions
-			bin_x, bin_y, bin_z, //  center of current bin 
-			dx, dy, dz;  //Distance comp of bin center to particle
+	double 	len_bin_x, len_bin_y, len_bin_z, 	//  bin dimensions
+			bin_x, bin_y, bin_z, 				//  center of current bin 
+			dx, dy, dz;  			//Distance comp of bin center to particle
 
-	double //q[num_bin_x*num_bin_y*num_bin_z][3][4], 
-		   qt[9], w[3], work[9]; //  q tensor and q tensor in form for lapack
+	double qt[9], w[3], work[9]; 				//  q tensor for lapack
 
-	char jobz, uplo; //  See documentation for dysev
+	char jobz, uplo; 							//  See documentation for dysev
 
-	int order, lda, lwork, info, bin_number,
-		n_bin;	//  Number of particles in bin
+	int order, lda, lwork, info, bin_number, 	//  See dysev doc
+		n_bin;									//  Number of particles in bin
 
 	//  Initialize params 
 	jobz = 'V';
@@ -141,25 +137,34 @@ void calc_dir_field(double* x, double* y, double* z,
 					}
 
 					//  Call LAPACK
-					dsyev_(&jobz, &uplo, &order, qt, &lda, w, work, &lwork, &info);
+					dsyev_(&jobz, &uplo, &order, qt, &lda, 
+							w, work, &lwork, &info);
 
-					//  Store eigenstuff and position of bin?
+					//  Store eigenstuff
 					eigenval[bin_number][0] = w[0];
 					eigenval[bin_number][1] = w[1];
 					eigenval[bin_number][2] = w[2]; 
 					eigenval[bin_number][3] = pow(w[0]*w[1]*w[2], 2)
 						/pow(w[0]*w[0]+w[1]*w[1]+w[2]*w[2], 3) - 1.0/54;
 					
-					ex_dir[bin_number] = qt[6];///mag;
-					ey_dir[bin_number] = qt[7];///mag;
-					ez_dir[bin_number] = qt[8];///mag;
+					ex_dir[bin_number] = qt[6];
+					ey_dir[bin_number] = qt[7];
+					ez_dir[bin_number] = qt[8];
 
+					//  Make unit length
 					ex_dir[bin_number] = ex_dir[bin_number]
-						/mag_vec(ex_dir[bin_number], ey_dir[bin_number], ez_dir[bin_number]);
+						/mag_vec(ex_dir[bin_number], 
+								ey_dir[bin_number], 
+								ez_dir[bin_number]);
+
 					ey_dir[bin_number] = ey_dir[bin_number]
-						/mag_vec(ex_dir[bin_number], ey_dir[bin_number], ez_dir[bin_number]);
+						/mag_vec(ex_dir[bin_number], 
+								ey_dir[bin_number], 
+								ez_dir[bin_number]);
 					ez_dir[bin_number] = ez_dir[bin_number]
-						/mag_vec(ex_dir[bin_number], ey_dir[bin_number], ez_dir[bin_number]);
+						/mag_vec(ex_dir[bin_number], 
+								ey_dir[bin_number], 
+								ez_dir[bin_number]);
 				}	
 
 				//  Increment bin number
@@ -179,15 +184,25 @@ void calc_dir_field(double* x, double* y, double* z,
 
 		for(int i = 0; i < bin_number; i++){
 			if(fabs(z_dir[i] - mid_z) == 0 && isnan(ex_dir[i]) == 0){
+
+				//  Make sure unit length
 				double mag = mag_vec(ex_dir[i], ey_dir[i], ez_dir[i]);
 				ex_dir[i] = ex_dir[i]/mag;
 				ey_dir[i] = ey_dir[i]/mag;
 				ez_dir[i] = ez_dir[i]/mag;
-				printf("length before = %f\n", mag);
-				mag = mag_vec(ex_dir[i], ey_dir[i], ez_dir[i]);
-				printf("length after = %f\n", mag);
-				fprintf(o, "%f    %f    %f    %f\n", x_dir[i], y_dir[i], ex_dir[i], ey_dir[i]);
-				fprintf(p, "%f    %f    %f    %f    %f    %f\n", x_dir[i], y_dir[i], eigenval[i][3], eigenval[i][0], eigenval[i][1], eigenval[i][2]);
+
+				//  Write 2-D slice
+				fprintf(o, "%f    %f    %f    %f    %f    %f\n", 
+						x_dir[i], y_dir[i], z_dir[i],
+						ex_dir[i], ey_dir[i], ez_dir[i]);
+
+				//  Write eigen values
+				fprintf(p, 
+						"%f    %f    %f    %f    %f    %f    %f    %f    %f    %f\n", 
+						x_dir[i], y_dir[i], z_dir[i],
+						ex_dir[i], ey_dir[i], ez_dir[i],
+						eigenval[i][3], 
+						eigenval[i][0], eigenval[i][1], eigenval[i][2]);
 			}
 		}
 
@@ -762,22 +777,3 @@ void write_vectors(double* x, double* y, double* z,
 
 	fclose(o);
 }
-
-/*  same as write, but extra integer to mark color
-void write_vectors_colored(double* x, double* y, double* z,
-				   double* ex, double* ey, double* ez,
-				   double* color){
-	FILE* o;
-	o = fopen("vector.dat", "a");
-
-	for(int i = 0; i < N; i++){
-		o, x[i],"\t",y[i],"\t",z[i],"\t"
-		 ,ex[i],"\t",ey[i],"\t",ez[i],"\t" 
-		 ,(int) color[i]);
-	}
-
-	//  Need extra lines for gnuplot to recognize blocks	
-	o,endl,endl);
-
-	o.fclose();
-}*/
